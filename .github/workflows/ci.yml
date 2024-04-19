@@ -1,0 +1,56 @@
+on:
+    push:
+      tags:
+        - 'v*'
+  
+name: gateway ci
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build
+      run: |
+        go build
+        mkdir -p output/bin
+        mv ./grpc-gateway output/bin/
+
+    - name: Backup old version
+      uses: appleboy/ssh-action@master
+      with: 
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: ${{ secrets.SERVER_PORT }}
+        script: |
+          mv ${{ secrets.DEPLOY_PATH }} ${{ secrets.DEPLOY_PATH }}.$(date +%Y%m%d_%H%M)
+
+    - name: Deploy
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: ${{ secrets.SERVER_PORT }}
+        source: ./output/*
+        target: ${{ secrets.DEPLOY_PATH }}
+        strip_components: 1
+  
+  restart:
+    name: Restart(TODO)
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    steps:
+    - uses: appleboy/ssh-action@master
+      with: 
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        password: ${{ secrets.SERVER_PASSWORD }}
+        port: ${{ secrets.SERVER_PORT }}
+        script: |
+          cd ${{ secrets.DEPLOY_PATH }}
+          ls -al
