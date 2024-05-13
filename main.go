@@ -41,7 +41,7 @@ func run() error {
 	}
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	return http.ListenAndServe(":8124", mux)
+	return http.ListenAndServeTLS(":8124", "./cert/cert_chain.pem", "./cert/privkey.key", mux)
 }
 
 func main() {
