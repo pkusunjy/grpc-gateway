@@ -13,6 +13,8 @@ import (
 
 	auth "github.com/pkusunjy/openai-server-proto/auth"
 	chat "github.com/pkusunjy/openai-server-proto/chat_completion"
+	pool "github.com/pkusunjy/openai-server-proto/exercise_pool"
+	user "github.com/pkusunjy/openai-server-proto/user"
 )
 
 var (
@@ -48,6 +50,16 @@ func run() error {
 	}
 
 	err = chat.RegisterChatServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	if err != nil {
+		return err
+	}
+
+	err = pool.RegisterExercisePoolServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	if err != nil {
+		return err
+	}
+
+	err = user.RegisterUserServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
 		return err
 	}
