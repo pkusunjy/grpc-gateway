@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
-	github.com/pkusunjy/openai-server-proto v1.0.7
+	github.com/pkusunjy/openai-server-proto v1.0.8
 	google.golang.org/grpc v1.64.0
 )
 
