@@ -15,6 +15,7 @@ import (
 	chat "github.com/pkusunjy/openai-server-proto/chat_completion"
 	pool "github.com/pkusunjy/openai-server-proto/exercise_pool"
 	user "github.com/pkusunjy/openai-server-proto/user"
+	wx_payment "github.com/pkusunjy/openai-server-proto/wx_payment"
 )
 
 var (
@@ -61,6 +62,11 @@ func run() error {
 	}
 
 	err = user.RegisterUserServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	if err != nil {
+		return err
+	}
+
+	err = wx_payment.RegisterWxPaymentServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
 		return err
 	}
