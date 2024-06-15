@@ -15,9 +15,12 @@ jobs:
 
     - name: Build
       run: |
+        sed -i "s/TOKEN_WX_APPID/${{ secrets.TOKEN_WX_APPID }}/g" ./conf/auth.yaml
+        sed -i "s/TOKEN_WX_SECRET/${{ secrets.TOKEN_WX_SECRET }}/g" ./conf/auth.yaml
         go build
-        mkdir -p output/bin
+        mkdir -p output/bin output/conf
         mv ./grpc-gateway output/bin/
+        mv ./conf/* output/conf/
 
     - name: Backup old version
       uses: appleboy/ssh-action@master
