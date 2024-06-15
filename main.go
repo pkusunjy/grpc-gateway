@@ -99,7 +99,7 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		},
 	)
 	if err != nil {
-		grpclog.Fatal("call PrepayWithRequestPayment failed error:", err)
+		grpclog.Error("call PrepayWithRequestPayment failed error:", err)
 		return nil, err
 	}
 	resp := wx_payment.JsApiResponse{
