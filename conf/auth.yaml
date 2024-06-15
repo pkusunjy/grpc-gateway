@@ -1,3 +1,5 @@
 wx_appid: TOKEN_WX_APPID
 wx_mchid: TOKEN_WX_MCHID
+wx_mch_apiv3: TOKEN_WX_MCH_APIV3
 wx_secret: TOKEN_WX_SECRET
+wx_serial_no: TOKEN_WX_SERIAL_NO
