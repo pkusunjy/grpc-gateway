@@ -32,7 +32,7 @@ var (
 	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:8123", "gRPC server endpoint")
 	certChain          = flag.String("cert-chain", "/home/work/cert/cert_chain.pem", "cert chain file")
 	privKey            = flag.String("privkey", "/home/work/cert/privkey.key", "privkey")
-	apiClientKeyPath   = flag.String("api_client_key_path", "/home/work/certs/apiclient_key.pem", "api_client_key_path")
+	apiClientKeyPath   = flag.String("api_client_key_path", "/home/work/cert/apiclient_key.pem", "api_client_key_path")
 	offlineModeLocal   = flag.Bool("is_offline_local", false, "whether enable ssl certification on gateway side")
 	offlineModeGrpc    = flag.Bool("is_offline_grpc", false, "whether enable ssl certification between gateway and grpc")
 )
