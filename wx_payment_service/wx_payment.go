@@ -65,10 +65,10 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		jsapi.PrepayRequest{
 			Appid:       &server.WxAppID,
 			Mchid:       &server.WxMchID,
-			Description: core.String("MikiAi会员购买"),
+			Description: core.String(jsapiDescription),
 			OutTradeNo:  core.String(req.GetOpenid() + strconv.FormatInt(time.Now().Unix(), 10)),
-			Attach:      core.String("MikiAi会员购买"),
-			NotifyUrl:   core.String("https://mikiai.tuyaedu.com:8124/wx_payment.NotifyService/jsapi_notify_url"),
+			Attach:      core.String(jsapiAttach),
+			NotifyUrl:   core.String(*notifyUrl),
 			Amount: &jsapi.Amount{
 				Total: core.Int64(1),
 			},
