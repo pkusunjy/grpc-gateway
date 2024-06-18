@@ -58,6 +58,12 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 }
 
 func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.JsApiRequest) (*wx_payment.JsApiResponse, error) {
+	openid := req.GetOpenid()
+	amount := req.GetAmount()
+	if len(openid) == 0 || amount == 0 {
+		grpclog.Error("request params invalid")
+		return nil, fmt.Errorf("openid: %s amount:%d", openid, amount)
+	}
 	svc := jsapi.JsapiApiService{Client: server.WxClient}
 	outTradeNo, err := GenRandomStr()
 	if err != nil {
@@ -73,10 +79,10 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 			Attach:      core.String(jsapiAttach),
 			NotifyUrl:   core.String(*notifyUrl),
 			Amount: &jsapi.Amount{
-				Total: core.Int64(1),
+				Total: core.Int64(int64(amount)),
 			},
 			Payer: &jsapi.Payer{
-				Openid: core.String(req.GetOpenid()),
+				Openid: core.String(openid),
 			},
 		},
 	)
