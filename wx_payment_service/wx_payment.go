@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/pkusunjy/openai-server-proto/wx_payment"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
@@ -61,12 +59,17 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 
 func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.JsApiRequest) (*wx_payment.JsApiResponse, error) {
 	svc := jsapi.JsapiApiService{Client: server.WxClient}
+	outTradeNo, err := GenRandomStr()
+	if err != nil {
+		grpclog.Error("generate out_trade_no failed error:", err)
+		return nil, err
+	}
 	prepayResp, _, err := svc.PrepayWithRequestPayment(ctx,
 		jsapi.PrepayRequest{
 			Appid:       &server.WxAppID,
 			Mchid:       &server.WxMchID,
 			Description: core.String(jsapiDescription),
-			OutTradeNo:  core.String(req.GetOpenid() + strconv.FormatInt(time.Now().Unix(), 10)),
+			OutTradeNo:  core.String(*outTradeNo),
 			Attach:      core.String(jsapiAttach),
 			NotifyUrl:   core.String(*notifyUrl),
 			Amount: &jsapi.Amount{
