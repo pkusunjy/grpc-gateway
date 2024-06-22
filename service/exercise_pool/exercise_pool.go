@@ -104,7 +104,7 @@ func (server ExercisePoolServiceImpl) Set(ctx context.Context, req *exercise_poo
 			// escape
 			content = strings.ReplaceAll(content, "'", "\\'")
 			content = strings.ReplaceAll(content, "\"", "\\\"")
-			execCmd := fmt.Sprintf("INSERT INTO exercise_pool VALUES (%d, '%s', '%s', '%s', '%s', '%s');",
+			execCmd := fmt.Sprintf("INSERT INTO exercise_pool (scene, title, content, author, create_time, expire_time) VALUES (%d, '%s', '%s', '%s', '%s', '%s');",
 				scene,
 				title,
 				content,
