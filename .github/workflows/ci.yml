@@ -15,6 +15,10 @@ jobs:
 
     - name: Build
       run: |
+        sed -i "s/DB_IP/${{ secrets.DB_IP }}/g" ./conf/mysql.yaml
+        sed -i "s/DB_PORT/${{ secrets.DB_PORT }}/g" ./conf/mysql.yaml
+        sed -i "s/DB_USER/${{ secrets.DB_USER }}/g" ./conf/mysql.yaml
+        sed -i "s/DB_PASSWD/${{ secrets.DB_PASSWD }}/g" ./conf/mysql.yaml
         sed -i "s/TOKEN_WX_APPID/${{ secrets.TOKEN_WX_APPID }}/g" ./conf/wx_payment.yaml
         sed -i "s/TOKEN_WX_MCHID/${{ secrets.TOKEN_WX_MCHID }}/g" ./conf/wx_payment.yaml
         sed -i "s/TOKEN_WX_MCH_APIV3/${{ secrets.TOKEN_WX_MCH_APIV3 }}/g" ./conf/wx_payment.yaml

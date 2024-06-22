@@ -1,2 +1,4 @@
+ip: DB_IP
+port: DB_PORT
 user: DB_USER
 password: DB_PASSWD

@@ -11,10 +11,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 
-	wx_payment_service "github.com/pkusunjy/grpc-gateway/src/wx_payment"
+	exercise_pool_service "github.com/pkusunjy/grpc-gateway/service/exercise_pool"
+	wx_payment_service "github.com/pkusunjy/grpc-gateway/service/wx_payment"
 	auth "github.com/pkusunjy/openai-server-proto/auth"
 	chat "github.com/pkusunjy/openai-server-proto/chat_completion"
-	pool "github.com/pkusunjy/openai-server-proto/exercise_pool"
+	exercise_pool_pb "github.com/pkusunjy/openai-server-proto/exercise_pool"
 	user "github.com/pkusunjy/openai-server-proto/user"
 	wx_payment_pb "github.com/pkusunjy/openai-server-proto/wx_payment"
 )
@@ -57,11 +58,6 @@ func run() error {
 		return err
 	}
 
-	err = pool.RegisterExercisePoolServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
-	if err != nil {
-		return err
-	}
-
 	err = user.RegisterUserServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
 		return err
@@ -73,6 +69,16 @@ func run() error {
 	}
 
 	// custom routes
+	exercisePoolServer, err := exercise_pool_service.ExercisePoolServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("ExercisePoolService failed error:", err)
+		return err
+	}
+	err = exercise_pool_pb.RegisterExercisePoolServiceHandlerServer(ctx, mux, exercisePoolServer)
+	if err != nil {
+		return err
+	}
+
 	wxPaymentServer, err := wx_payment_service.WxPaymentServiceInitialize(&ctx)
 	if err != nil {
 		grpclog.Fatal("WxPaymentServiceInitialize failed error:", err)

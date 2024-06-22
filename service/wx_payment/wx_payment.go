@@ -31,7 +31,6 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 		grpclog.Fatal(err)
 		return nil, err
 	}
-	fmt.Println(string(content))
 	server := WxPaymentServiceImpl{}
 	err = yaml.Unmarshal(content, &server)
 	if err != nil {
