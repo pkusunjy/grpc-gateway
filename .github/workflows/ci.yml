@@ -15,11 +15,11 @@ jobs:
 
     - name: Build
       run: |
-        sed -i "s/TOKEN_WX_APPID/${{ secrets.TOKEN_WX_APPID }}/g" ./conf/auth.yaml
-        sed -i "s/TOKEN_WX_MCHID/${{ secrets.TOKEN_WX_MCHID }}/g" ./conf/auth.yaml
-        sed -i "s/TOKEN_WX_MCH_APIV3/${{ secrets.TOKEN_WX_MCH_APIV3 }}/g" ./conf/auth.yaml
-        sed -i "s/TOKEN_WX_SECRET/${{ secrets.TOKEN_WX_SECRET }}/g" ./conf/auth.yaml
-        sed -i "s/TOKEN_WX_SERIAL_NO/${{ secrets.TOKEN_WX_SERIAL_NO }}/g" ./conf/auth.yaml
+        sed -i "s/TOKEN_WX_APPID/${{ secrets.TOKEN_WX_APPID }}/g" ./conf/wx_payment.yaml
+        sed -i "s/TOKEN_WX_MCHID/${{ secrets.TOKEN_WX_MCHID }}/g" ./conf/wx_payment.yaml
+        sed -i "s/TOKEN_WX_MCH_APIV3/${{ secrets.TOKEN_WX_MCH_APIV3 }}/g" ./conf/wx_payment.yaml
+        sed -i "s/TOKEN_WX_SECRET/${{ secrets.TOKEN_WX_SECRET }}/g" ./conf/wx_payment.yaml
+        sed -i "s/TOKEN_WX_SERIAL_NO/${{ secrets.TOKEN_WX_SERIAL_NO }}/g" ./conf/wx_payment.yaml
         go build
         mkdir -p output/bin output/conf
         mv ./grpc-gateway output/bin/

@@ -11,12 +11,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 
-	wxpaymentservice "github.com/pkusunjy/grpc-gateway/wx_payment_service"
+	wx_payment_service "github.com/pkusunjy/grpc-gateway/src/wx_payment"
 	auth "github.com/pkusunjy/openai-server-proto/auth"
 	chat "github.com/pkusunjy/openai-server-proto/chat_completion"
 	pool "github.com/pkusunjy/openai-server-proto/exercise_pool"
 	user "github.com/pkusunjy/openai-server-proto/user"
-	wx_payment "github.com/pkusunjy/openai-server-proto/wx_payment"
+	wx_payment_pb "github.com/pkusunjy/openai-server-proto/wx_payment"
 )
 
 var (
@@ -67,18 +67,18 @@ func run() error {
 		return err
 	}
 
-	err = wx_payment.RegisterNotifyServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	err = wx_payment_pb.RegisterNotifyServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
 		return err
 	}
 
 	// custom routes
-	wxPaymentServer, err := wxpaymentservice.WxPaymentServiceInitialize(&ctx)
+	wxPaymentServer, err := wx_payment_service.WxPaymentServiceInitialize(&ctx)
 	if err != nil {
 		grpclog.Fatal("WxPaymentServiceInitialize failed error:", err)
 		return err
 	}
-	err = wx_payment.RegisterWxPaymentServiceHandlerServer(ctx, mux, wxPaymentServer)
+	err = wx_payment_pb.RegisterWxPaymentServiceHandlerServer(ctx, mux, wxPaymentServer)
 	if err != nil {
 		return err
 	}

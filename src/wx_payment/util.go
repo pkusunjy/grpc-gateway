@@ -1,4 +1,4 @@
-package wxpaymentservice
+package wx_payment
 
 import (
 	"bytes"
