@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkusunjy/openai-server-proto/exercise_pool"
 	"google.golang.org/grpc/grpclog"
 	"gopkg.in/yaml.v3"
