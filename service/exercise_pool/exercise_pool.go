@@ -183,3 +183,116 @@ func (server ExercisePoolServiceImpl) Get(ctx context.Context, req *exercise_poo
 	}
 	return &resp, nil
 }
+
+func (server ExercisePoolServiceImpl) DelByTitle(ctx context.Context, req *exercise_pool.ExercisePoolRequest) (*exercise_pool.ExercisePoolResponse, error) {
+	var resp exercise_pool.ExercisePoolResponse
+	scene := req.GetScene()
+	if scene == exercise_pool.Scene_ILLEGAL {
+		resp.ErrNo = 1
+		resp.ErrMsg = "illegal scene"
+		return &resp, nil
+	}
+	items := req.GetItems()
+	if items == nil {
+		grpclog.Errorf("received request %v, input items empty", req)
+		resp.ErrNo = 1
+		resp.ErrMsg = "input items empty"
+		return &resp, nil
+	}
+
+	tx, err := server.db.BeginTx(ctx, nil)
+	if err != nil {
+		grpclog.Errorf("sql db begin transaction failed")
+		resp.ErrNo = 1
+		resp.ErrMsg = "db BeginTx failed"
+		return &resp, nil
+	}
+	defer tx.Rollback()
+
+	for _, item := range items {
+		title := item.GetTitle()
+		// escape
+		title = strings.ReplaceAll(title, "'", "\\'")
+		title = strings.ReplaceAll(title, "\"", "\\\"")
+		execCmd := fmt.Sprintf("DELETE FROM exercise_pool WHERE scene=%d AND title='%s';", scene, title)
+		rs, err := tx.ExecContext(ctx, execCmd)
+		if err != nil {
+			grpclog.Errorf("exec delete failed error: %v", err)
+			continue
+		}
+		rowsAffected, err := rs.RowsAffected()
+		if err != nil {
+			grpclog.Errorf("get RowsAffected failed error: %v", err)
+			continue
+		}
+		grpclog.Infof("cmd: %v rows affected: %v", execCmd, rowsAffected)
+	}
+	if err := tx.Commit(); err != nil {
+		grpclog.Errorf("tx Commit failed error: %v", err)
+		resp.ErrNo = 1
+		resp.ErrMsg = "tx commit failed " + err.Error()
+		return &resp, nil
+	}
+	resp.ErrNo = 0
+	resp.ErrMsg = "success"
+	return &resp, nil
+}
+
+func (server ExercisePoolServiceImpl) DelByContentIndex(ctx context.Context, req *exercise_pool.ExercisePoolRequest) (*exercise_pool.ExercisePoolResponse, error) {
+	var resp exercise_pool.ExercisePoolResponse
+	scene := req.GetScene()
+	if scene == exercise_pool.Scene_ILLEGAL {
+		resp.ErrNo = 1
+		resp.ErrMsg = "illegal scene"
+		return &resp, nil
+	}
+	items := req.GetItems()
+	if items == nil {
+		grpclog.Errorf("received request %v, input items empty", req)
+		resp.ErrNo = 1
+		resp.ErrMsg = "input items empty"
+		return &resp, nil
+	}
+
+	tx, err := server.db.BeginTx(ctx, nil)
+	if err != nil {
+		grpclog.Errorf("sql db begin transaction failed")
+		resp.ErrNo = 1
+		resp.ErrMsg = "db BeginTx failed"
+		return &resp, nil
+	}
+	defer tx.Rollback()
+
+	for _, item := range items {
+		title := item.GetTitle()
+		// escape
+		title = strings.ReplaceAll(title, "'", "\\'")
+		title = strings.ReplaceAll(title, "\"", "\\\"")
+		for _, content := range item.Content {
+			// escape
+			content = strings.ReplaceAll(content, "'", "\\'")
+			content = strings.ReplaceAll(content, "\"", "\\\"")
+			execCmd := fmt.Sprintf("DELETE FROM exercise_pool WHERE scene=%d AND title='%s' AND content='%s';", scene, title, content)
+			rs, err := tx.ExecContext(ctx, execCmd)
+			if err != nil {
+				grpclog.Errorf("exec delete failed error: %v", err)
+				continue
+			}
+			rowsAffected, err := rs.RowsAffected()
+			if err != nil {
+				grpclog.Errorf("get RowsAffected failed error: %v", err)
+				continue
+			}
+			grpclog.Infof("cmd: %v rows affected: %v", execCmd, rowsAffected)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		grpclog.Errorf("tx Commit failed error: %v", err)
+		resp.ErrNo = 1
+		resp.ErrMsg = "tx commit failed " + err.Error()
+		return &resp, nil
+	}
+	resp.ErrNo = 0
+	resp.ErrMsg = "success"
+	return &resp, nil
+}
