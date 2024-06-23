@@ -11,12 +11,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 
+	auth_service "github.com/pkusunjy/grpc-gateway/service/auth"
 	exercise_pool_service "github.com/pkusunjy/grpc-gateway/service/exercise_pool"
 	wx_payment_service "github.com/pkusunjy/grpc-gateway/service/wx_payment"
-	auth "github.com/pkusunjy/openai-server-proto/auth"
-	chat "github.com/pkusunjy/openai-server-proto/chat_completion"
+	auth_pb "github.com/pkusunjy/openai-server-proto/auth"
+	chat_pb "github.com/pkusunjy/openai-server-proto/chat_completion"
 	exercise_pool_pb "github.com/pkusunjy/openai-server-proto/exercise_pool"
-	user "github.com/pkusunjy/openai-server-proto/user"
 	wx_payment_pb "github.com/pkusunjy/openai-server-proto/wx_payment"
 )
 
@@ -48,27 +48,21 @@ func run() error {
 		opts = []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 	}
 
-	err := auth.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
-	if err != nil {
-		return err
-	}
-
-	err = chat.RegisterChatServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
-	if err != nil {
-		return err
-	}
-
-	err = user.RegisterUserServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
-	if err != nil {
-		return err
-	}
-
-	err = wx_payment_pb.RegisterNotifyServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	err := chat_pb.RegisterChatServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
 		return err
 	}
 
 	// custom routes
+	authService, err := auth_service.AuthServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("AuthServiceInitialize failed error:", err)
+		return err
+	}
+	if err = auth_pb.RegisterAuthServiceHandlerServer(ctx, mux, authService); err != nil {
+		return err
+	}
+
 	exercisePoolServer, err := exercise_pool_service.ExercisePoolServiceInitialize(&ctx)
 	if err != nil {
 		grpclog.Fatal("ExercisePoolService failed error:", err)

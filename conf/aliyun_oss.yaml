@@ -1,0 +1,3 @@
+oss_endpoint: OSS_ACCESS_ENDPOINT
+oss_access_key_id: OSS_ACCESS_KEY_ID
+oss_access_key_secret: OSS_ACCESS_KEY_SECRET

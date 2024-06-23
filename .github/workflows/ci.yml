@@ -15,6 +15,9 @@ jobs:
 
     - name: Build
       run: |
+        sed -i "s/OSS_ACCESS_ENDPOINT/${{ secrets.OSS_ACCESS_ENDPOINT }}/g" ./conf/aliyun_oss.yaml
+        sed -i "s/OSS_ACCESS_KEY_ID/${{ secrets.OSS_ACCESS_KEY_ID }}/g" ./conf/aliyun_oss.yaml
+        sed -i "s/OSS_ACCESS_KEY_SECRET/${{ secrets.OSS_ACCESS_KEY_SECRET }}/g" ./conf/aliyun_oss.yaml
         sed -i "s/DB_IP/${{ secrets.DB_IP }}/g" ./conf/mysql.yaml
         sed -i "s/DB_PORT/${{ secrets.DB_PORT }}/g" ./conf/mysql.yaml
         sed -i "s/DB_USER/${{ secrets.DB_USER }}/g" ./conf/mysql.yaml
