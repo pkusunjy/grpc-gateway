@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	auth_service "github.com/pkusunjy/grpc-gateway/service/auth"
 	exercise_pool_service "github.com/pkusunjy/grpc-gateway/service/exercise_pool"
@@ -18,6 +19,11 @@ import (
 	chat_pb "github.com/pkusunjy/openai-server-proto/chat_completion"
 	exercise_pool_pb "github.com/pkusunjy/openai-server-proto/exercise_pool"
 	wx_payment_pb "github.com/pkusunjy/openai-server-proto/wx_payment"
+)
+
+const (
+	LOGINFO = "../logs/gateway.log"
+	LOGWF   = "../logs/gateway.log.wf"
 )
 
 var (
@@ -93,6 +99,24 @@ func run() error {
 
 func main() {
 	flag.Parse()
+
+	lumberjackInfoLogger := &lumberjack.Logger{
+		Filename:   LOGINFO,
+		MaxSize:    200,
+		MaxBackups: 7,
+		MaxAge:     28,
+		Compress:   true,
+	}
+
+	lumberjackWfLogger := &lumberjack.Logger{
+		Filename:   LOGWF,
+		MaxSize:    200,
+		MaxBackups: 7,
+		MaxAge:     28,
+		Compress:   true,
+	}
+
+	grpclog.SetLoggerV2(grpclog.NewLoggerV2(lumberjackInfoLogger, lumberjackWfLogger, lumberjackWfLogger))
 
 	if err := run(); err != nil {
 		grpclog.Fatal(err)
