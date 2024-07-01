@@ -9,6 +9,19 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
+type CustomerParam struct {
+	MemberType  string `json:"memberType,omitempty"`
+	Nickname    string `json:"nickName,omitempty"`
+	PhoneNumber string `json:"phoneNumber,omitempty"`
+	UserName    string `json:"username,omitempty"`
+}
+
+type OrderParam struct {
+	OrderCode string `json:"orderCode,omitempty"`
+	OrderType string `json:"orderType,omitempty"`
+	UserName  string `json:"username,omitempty"`
+}
+
 func GenRandomStr() (*string, error) {
 	file, err := os.Open("/dev/random")
 	if err != nil {

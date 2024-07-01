@@ -59,7 +59,7 @@ func run() error {
 		return err
 	}
 
-	// custom routes
+	// generated routes
 	authService, err := auth_service.AuthServiceInitialize(&ctx)
 	if err != nil {
 		grpclog.Fatal("AuthServiceInitialize failed error:", err)
@@ -86,6 +86,20 @@ func run() error {
 	}
 	err = wx_payment_pb.RegisterWxPaymentServiceHandlerServer(ctx, mux, wxPaymentServer)
 	if err != nil {
+		return err
+	}
+
+	// custom routes
+	notifyServer, err := wx_payment_service.NotifyServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("WxPaymentNotifyServiceInitialize failed error:", err)
+		return err
+	}
+	err = mux.HandlePath("POST", "/wx_payment.NotifyService/jsapi_notify_url", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		notifyServer.NotifyWxPayment(&ctx, w, r)
+	})
+	if err != nil {
+		grpclog.Fatal("WxPaymentNotifyService HandlePath failed error:", err)
 		return err
 	}
 
