@@ -1,2 +1,2 @@
-save_customer_url: SAVE_CUSTOMER_URL
-save_order_url: SAVE_ORDER_URL
+save_customer_url: DATA_PLATFORM_SAVE_CUSTOMER_URL
+save_order_url: DATA_PLATFORM_SAVE_ORDER_URL

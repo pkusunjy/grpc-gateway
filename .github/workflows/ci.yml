@@ -21,8 +21,8 @@ jobs:
 
     - name: Replace secrets for data_platform.yaml
       run: |
-        sed -i "s/SAVE_CUSTOMER_URL/${{ secrets.SAVE_CUSTOMER_URL }}/g" ./conf/data_platform.yaml
-        sed -i "s/SAVE_ORDER_URL/${{ secrets.SAVE_ORDER_URL }}/g" ./conf/data_platform.yaml
+        sed -i "s/DATA_PLATFORM_SAVE_CUSTOMER_URL/${{ secrets.SAVE_CUSTOMER_URL }}/g" ./conf/data_platform.yaml
+        sed -i "s/DATA_PLATFORM_SAVE_ORDER_URL/${{ secrets.SAVE_ORDER_URL }}/g" ./conf/data_platform.yaml
 
     - name: Replace secrets for mysql.yaml
       run: |
