@@ -13,22 +13,34 @@ jobs:
     - name: checkout repository
       uses: actions/checkout@v4
 
-    - name: Build
+    - name: Replace secrets for aliyun_oss.yaml
       run: |
         sed -i "s/OSS_ACCESS_ENDPOINT/${{ secrets.OSS_ACCESS_ENDPOINT }}/g" ./conf/aliyun_oss.yaml
         sed -i "s/OSS_ACCESS_KEY_ID/${{ secrets.OSS_ACCESS_KEY_ID }}/g" ./conf/aliyun_oss.yaml
         sed -i "s/OSS_ACCESS_KEY_SECRET/${{ secrets.OSS_ACCESS_KEY_SECRET }}/g" ./conf/aliyun_oss.yaml
+
+    - name: Replace secrets for data_platform.yaml
+      run: |
         sed -i "s/SAVE_CUSTOMER_URL/${{ secrets.SAVE_CUSTOMER_URL }}/g" ./conf/data_platform.yaml
         sed -i "s/SAVE_ORDER_URL/${{ secrets.SAVE_ORDER_URL }}/g" ./conf/data_platform.yaml
+
+    - name: Replace secrets for mysql.yaml
+      run: |
         sed -i "s/DB_IP/${{ secrets.DB_IP }}/g" ./conf/mysql.yaml
         sed -i "s/DB_PORT/${{ secrets.DB_PORT }}/g" ./conf/mysql.yaml
         sed -i "s/DB_USER/${{ secrets.DB_USER }}/g" ./conf/mysql.yaml
         sed -i "s/DB_PASSWD/${{ secrets.DB_PASSWD }}/g" ./conf/mysql.yaml
+
+    - name: Replace secrets for wx_payment.yaml
+      run: |
         sed -i "s/TOKEN_WX_APPID/${{ secrets.TOKEN_WX_APPID }}/g" ./conf/wx_payment.yaml
         sed -i "s/TOKEN_WX_MCHID/${{ secrets.TOKEN_WX_MCHID }}/g" ./conf/wx_payment.yaml
         sed -i "s/TOKEN_WX_MCH_APIV3/${{ secrets.TOKEN_WX_MCH_APIV3 }}/g" ./conf/wx_payment.yaml
         sed -i "s/TOKEN_WX_SECRET/${{ secrets.TOKEN_WX_SECRET }}/g" ./conf/wx_payment.yaml
         sed -i "s/TOKEN_WX_SERIAL_NO/${{ secrets.TOKEN_WX_SERIAL_NO }}/g" ./conf/wx_payment.yaml
+  
+    - name: Build
+      run: |
         go build
         mkdir -p output/bin output/conf
         mv ./grpc-gateway output/bin/
