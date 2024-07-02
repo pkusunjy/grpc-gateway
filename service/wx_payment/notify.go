@@ -3,6 +3,7 @@ package wx_payment
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -18,14 +19,13 @@ import (
 )
 
 type NotifyServiceImpl struct {
-	WxAppID                     string `yaml:"wx_appid"`
-	WxMchID                     string `yaml:"wx_mchid"`
-	WxMchAPIv3Key               string `yaml:"wx_mch_apiv3"`
-	WxSecret                    string `yaml:"wx_secret"`
-	WxSerialNo                  string `yaml:"wx_serial_no"`
-	DataPlatformSaveCustomerUrl string `yaml:"save_customer_url"`
-	DataPlatformSaveOrderUrl    string `yaml:"save_order_url"`
-	NotifyHandler               *notify.Handler
+	WxAppID              string `yaml:"wx_appid"`
+	WxMchID              string `yaml:"wx_mchid"`
+	WxMchAPIv3Key        string `yaml:"wx_mch_apiv3"`
+	WxSecret             string `yaml:"wx_secret"`
+	WxSerialNo           string `yaml:"wx_serial_no"`
+	DataPlatformEndpoint string `yaml:"endpoint"`
+	NotifyHandler        *notify.Handler
 	wx_payment.UnimplementedNotifyServiceServer
 }
 
@@ -81,7 +81,8 @@ func (server NotifyServiceImpl) NotifyWxPayment(ctx *context.Context, w http.Res
 		MemberType: "0",
 		UserName:   *content.Payer.Openid,
 	})
-	req, _ := http.NewRequest("POST", server.DataPlatformSaveCustomerUrl, strings.NewReader(string(jsonStr)))
+	saveCustomerUrl := fmt.Sprintf("http://%s/utility-project/ysCustomer/save", server.DataPlatformEndpoint)
+	req, _ := http.NewRequest("POST", saveCustomerUrl, strings.NewReader(string(jsonStr)))
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -102,7 +103,8 @@ func (server NotifyServiceImpl) NotifyWxPayment(ctx *context.Context, w http.Res
 		OrderCode: *content.OutTradeNo,
 		UserName:  *content.Payer.Openid,
 	})
-	req, _ = http.NewRequest("POST", server.DataPlatformSaveOrderUrl, strings.NewReader(string(jsonStr)))
+	saveOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/save", server.DataPlatformEndpoint)
+	req, _ = http.NewRequest("POST", saveOrderUrl, strings.NewReader(string(jsonStr)))
 	req.Header.Add("Content-Type", "application/json")
 	resp2, err := http.DefaultClient.Do(req)
 	if err != nil {
