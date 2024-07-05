@@ -2,6 +2,7 @@ package wx_payment
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -63,12 +64,15 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		grpclog.Errorf("request params invalid, received openid:%v amount:%v", openid, amount)
 		return nil, fmt.Errorf("openid: %s amount:%d", openid, amount)
 	}
+	reqJson, _ := json.Marshal(req)
+	grpclog.Infof("received request: %v", string(reqJson))
 	svc := jsapi.JsapiApiService{Client: server.WxClient}
 	outTradeNo, err := GenRandomStr()
 	if err != nil {
 		grpclog.Error("generate out_trade_no failed error:", err)
 		return nil, err
 	}
+	grpclog.Infof("received request: %v", string(reqJson))
 	prepayResp, _, err := svc.PrepayWithRequestPayment(ctx,
 		jsapi.PrepayRequest{
 			Appid:       &server.WxAppID,
@@ -88,6 +92,8 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	if err != nil {
 		grpclog.Error("call PrepayWithRequestPayment failed error:", err)
 		return nil, err
+	} else {
+		grpclog.Info("call PrepayWithRequestPayment success")
 	}
 	resp := wx_payment.JsApiResponse{
 		Timestamp: *prepayResp.TimeStamp,
@@ -96,5 +102,7 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		SignType:  *prepayResp.SignType,
 		PaySign:   *prepayResp.PaySign,
 	}
+	respJson, _ := json.Marshal(&resp)
+	grpclog.Infof("return response: %v", string(respJson))
 	return &resp, nil
 }
