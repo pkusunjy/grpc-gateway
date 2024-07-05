@@ -60,7 +60,7 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	openid := req.GetOpenid()
 	amount := req.GetAmount()
 	if len(openid) == 0 || amount == 0 {
-		grpclog.Error("request params invalid, received openid:%v amount:%v", openid, amount)
+		grpclog.Errorf("request params invalid, received openid:%v amount:%v", openid, amount)
 		return nil, fmt.Errorf("openid: %s amount:%d", openid, amount)
 	}
 	svc := jsapi.JsapiApiService{Client: server.WxClient}
