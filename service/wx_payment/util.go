@@ -18,7 +18,7 @@ type CustomerParam struct {
 
 type OrderParam struct {
 	OrderCode string `json:"orderCode,omitempty"`
-	OrderType string `json:"orderType,omitempty"`
+	OrderType int32  `json:"orderType,omitempty"`
 	UserName  string `json:"username,omitempty"`
 }
 

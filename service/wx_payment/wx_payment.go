@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/pkusunjy/openai-server-proto/wx_payment"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
@@ -16,12 +19,13 @@ import (
 )
 
 type WxPaymentServiceImpl struct {
-	WxAppID       string `yaml:"wx_appid"`
-	WxMchID       string `yaml:"wx_mchid"`
-	WxMchAPIv3Key string `yaml:"wx_mch_apiv3"`
-	WxSecret      string `yaml:"wx_secret"`
-	WxSerialNo    string `yaml:"wx_serial_no"`
-	WxClient      *core.Client
+	DataPlatformEndpoint string `yaml:"endpoint"`
+	WxAppID              string `yaml:"wx_appid"`
+	WxMchID              string `yaml:"wx_mchid"`
+	WxMchAPIv3Key        string `yaml:"wx_mch_apiv3"`
+	WxSecret             string `yaml:"wx_secret"`
+	WxSerialNo           string `yaml:"wx_serial_no"`
+	WxClient             *core.Client
 	wx_payment.UnimplementedWxPaymentServiceServer
 }
 
@@ -50,6 +54,17 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 	)
 	if err != nil {
 		grpclog.Fatal("new wechat pay client error: ", err)
+		return nil, err
+	}
+	// load data_platform file
+	content, err = os.ReadFile(*dataPlatformFile)
+	if err != nil {
+		grpclog.Fatal(err)
+		return nil, err
+	}
+	err = yaml.Unmarshal(content, &server)
+	if err != nil {
+		grpclog.Fatal(err)
 		return nil, err
 	}
 
@@ -104,5 +119,49 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	}
 	respJson, _ := json.Marshal(&resp)
 	grpclog.Infof("return response: %v", string(respJson))
+
+	// add user
+	jsonStr, _ := json.Marshal(CustomerParam{
+		MemberType: "0",
+		UserName:   openid,
+	})
+	saveCustomerUrl := fmt.Sprintf("http://%s/utility-project/ysCustomer/save", server.DataPlatformEndpoint)
+	saveCustomerReq, _ := http.NewRequest("POST", saveCustomerUrl, strings.NewReader(string(jsonStr)))
+	saveCustomerReq.Header.Add("Content-Type", "application/json")
+	saveCustomerResp, err := http.DefaultClient.Do(saveCustomerReq)
+	if err != nil {
+		grpclog.Errorf("Error sending request:%v", err)
+		return nil, err
+	}
+	defer saveCustomerResp.Body.Close()
+	saveCustomerBody, err := io.ReadAll(saveCustomerResp.Body)
+	if err != nil {
+		grpclog.Errorf("Error read resp body:%v", err)
+		return nil, err
+	}
+	grpclog.Infof("save customer received response:%v", string(saveCustomerBody))
+
+	// save order
+	jsonStr, _ = json.Marshal(OrderParam{
+		OrderCode: *outTradeNo,
+		OrderType: req.DataPlatformOrderType,
+		UserName:  openid,
+	})
+	saveOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/save", server.DataPlatformEndpoint)
+	saveOrderReq, _ := http.NewRequest("POST", saveOrderUrl, strings.NewReader(string(jsonStr)))
+	saveOrderReq.Header.Add("Content-Type", "application/json")
+	saveOrderResp, err := http.DefaultClient.Do(saveOrderReq)
+	if err != nil {
+		grpclog.Errorf("Error sending request:%v", err)
+		return nil, err
+	}
+	defer saveOrderResp.Body.Close()
+
+	saveOrderBody, err := io.ReadAll(saveOrderResp.Body)
+	if err != nil {
+		grpclog.Errorf("Error read resp body:%v", err)
+		return nil, err
+	}
+	grpclog.Infof("save order received response:%v", string(saveOrderBody))
 	return &resp, nil
 }
