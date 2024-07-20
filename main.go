@@ -14,6 +14,7 @@ import (
 
 	auth_service "github.com/pkusunjy/grpc-gateway/service/auth"
 	exercise_pool_service "github.com/pkusunjy/grpc-gateway/service/exercise_pool"
+	"github.com/pkusunjy/grpc-gateway/service/platform"
 	wx_payment_service "github.com/pkusunjy/grpc-gateway/service/wx_payment"
 	auth_pb "github.com/pkusunjy/openai-server-proto/auth"
 	chat_pb "github.com/pkusunjy/openai-server-proto/chat_completion"
@@ -40,7 +41,7 @@ func run() error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	// Register gRPC server endpoint
+	// Register gRPC server endpoint begin
 	// Note: Make sure the gRPC server is running properly and accessible
 	mux := runtime.NewServeMux()
 	var opts []grpc.DialOption
@@ -58,8 +59,9 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	// Register gRPC server endpoint end
 
-	// generated routes
+	// Generated routes begin
 	authService, err := auth_service.AuthServiceInitialize(&ctx)
 	if err != nil {
 		grpclog.Fatal("AuthServiceInitialize failed error:", err)
@@ -88,8 +90,10 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	// Generated routes end
 
-	// custom routes
+	// Custom routes begin
+	// 微信回调接口
 	notifyServer, err := wx_payment_service.NotifyServiceInitialize(&ctx)
 	if err != nil {
 		grpclog.Fatal("WxPaymentNotifyServiceInitialize failed error:", err)
@@ -102,6 +106,23 @@ func run() error {
 		grpclog.Fatal("WxPaymentNotifyService HandlePath failed error:", err)
 		return err
 	}
+
+	// 转发数据接口
+	forwardServer, err := platform.ForwardServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("ForwardServiceInitialize failed error:", err)
+		return err
+	}
+	for path, meth := range platform.ForwardPathMethMap {
+		err = mux.HandlePath(meth, path, func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+			forwardServer.Forward(&ctx, w, r)
+		})
+		if err != nil {
+			grpclog.Fatalf("ForwardServer HandlePath %v failed err:%v", path, err)
+			return err
+		}
+	}
+	// Custom routes end
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
 	if *offlineModeLocal {
