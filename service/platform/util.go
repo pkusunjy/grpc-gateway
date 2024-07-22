@@ -10,6 +10,8 @@ var (
 		"/utility-project/ysCustomer/abtainDailyFreeUser":   "POST",
 		"/utility-project/ysCustomer/accessToUseOrNo":       "POST",
 		"/utility-project/ysCustomer/queryById":             "GET",
+		"/utility-project/ysCustomer/queryByUsername":       "GET",
+		"/utility-project/ysCustomer/queryDailyFreeUse":     "GET",
 		"/utility-project/ysCustomer/save":                  "POST",
 		"/utility-project/ysExperienceRecord/getByUserName": "GET",
 		"/utility-project/ysExperienceRecord/queryById":     "GET",
