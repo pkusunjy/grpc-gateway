@@ -57,6 +57,12 @@ func (s ForwardService) Forward(ctx *context.Context, w http.ResponseWriter, r *
 	grpclog.Infof("Forward recv request:%v", string(bodyBytes))
 
 	forwardRequest, _ := http.NewRequestWithContext(*ctx, r.Method, forwardURL, bytes.NewReader(bodyBytes))
+	// copy request header
+	for key, values := range r.Header {
+		for _, value := range values {
+			forwardRequest.Header.Add(key, value)
+		}
+	}
 	forwardResponse, err := http.DefaultClient.Do(forwardRequest)
 	if err != nil {
 		errmsg := fmt.Sprintf("Forward failed to request backend err:%+v", err)
