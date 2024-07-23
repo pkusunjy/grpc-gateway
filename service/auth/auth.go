@@ -66,7 +66,7 @@ func (server AuthServiceImpl) GetOssToken(ctx context.Context, req *auth.AuthReq
 	return &resp, nil
 }
 
-func (server AuthServiceImpl) Jscode2Session(ctx context.Context, req *auth.AuthRequest) (*auth.AuthResponse, error) {
+func (server AuthServiceImpl) Jscode2Session(ctx context.Context, req *auth.Code2SessionRequest) (*auth.Code2SessionResponse, error) {
 	url := fmt.Sprintf(code2SessionUrl, server.WxAppID, server.WxSecret, req.Code)
 	grpclog.Infof("code2session gen url: %s", url)
 	code2SessionResp, err := http.DefaultClient.Get(url)
@@ -75,17 +75,12 @@ func (server AuthServiceImpl) Jscode2Session(ctx context.Context, req *auth.Auth
 		return nil, err
 	}
 	defer code2SessionResp.Body.Close()
-	var wxMap map[string]string
-	err = json.NewDecoder(code2SessionResp.Body).Decode(&wxMap)
+	resp := auth.Code2SessionResponse{}
+	err = json.NewDecoder(code2SessionResp.Body).Decode(&resp)
 	if err != nil {
 		grpclog.Errorf("code2session json decode fail, err:%v", err)
 		return nil, err
 	}
-	grpclog.Infof("code2session wxMap:%+v", wxMap)
-	resp := auth.AuthResponse{
-		Openid:     wxMap["openid"],
-		SessionKey: wxMap["session_key"],
-		Unionid:    wxMap["unionid"],
-	}
+	grpclog.Infof("code2session resp:%+v", &resp)
 	return &resp, nil
 }
