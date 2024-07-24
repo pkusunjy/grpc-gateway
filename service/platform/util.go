@@ -21,7 +21,9 @@ var (
 		"/utility-project/ysOrder/queryByUsername":             "GET",
 		"/utility-project/ysOrder/save":                        "POST",
 		"/utility-project/ysPaper/queryById":                   "GET",
+		"/utility-project/ysPaper/queryPaperList":              "POST",
 		"/utility-project/ysPaper/queryExamByPaperType":        "GET",
 		"/utility-project/ysExam/queryById":                    "GET",
+		"/utility-project/ysExam/queryExamByPaperId":           "POST",
 	}
 )

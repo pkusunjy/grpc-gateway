@@ -9,7 +9,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkusunjy/openai-server-proto/wx_payment"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
@@ -26,7 +25,6 @@ type NotifyServiceImpl struct {
 	WxSerialNo           string `yaml:"wx_serial_no"`
 	DataPlatformEndpoint string `yaml:"endpoint"`
 	NotifyHandler        *notify.Handler
-	wx_payment.UnimplementedNotifyServiceServer
 }
 
 func NotifyServiceInitialize(ctx *context.Context) (*NotifyServiceImpl, error) {
