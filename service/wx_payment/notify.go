@@ -56,11 +56,10 @@ func NotifyServiceInitialize(ctx *context.Context) (*NotifyServiceImpl, error) {
 		server.WxMchAPIv3Key,
 		verifiers.NewSHA256WithRSAVerifier(certificateVisitor),
 	)
-	return nil, nil
+	return &server, nil
 }
 
 func (server NotifyServiceImpl) NotifyWxPayment(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
-	grpclog.Infof("notify wx_payment recv")
 	defer func() {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
@@ -73,14 +72,16 @@ func (server NotifyServiceImpl) NotifyWxPayment(ctx *context.Context, w http.Res
 		return
 	}
 	grpclog.Infof("notify summary: %v, content: %v", notifyReq.Summary, content)
-	// write to backend
-	// save customer
-	jsonStr, _ := json.Marshal(CustomerParam{
-		MemberType: "0",
-		UserName:   *content.Payer.Openid,
+	if *content.TradeState != "SUCCESS" {
+		grpclog.Errorf("TradeState not SUCCESS:%v", *content.TradeState)
+		return
+	}
+	// edit backend order table
+	jsonStr, _ := json.Marshal(OrderParam{
+		OrderCode: *content.OutTradeNo,
 	})
-	saveCustomerUrl := fmt.Sprintf("http://%s/utility-project/ysCustomer/save", server.DataPlatformEndpoint)
-	req, _ := http.NewRequest("POST", saveCustomerUrl, strings.NewReader(string(jsonStr)))
+	editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
+	req, _ := http.NewRequest("POST", editOrderUrl, strings.NewReader(string(jsonStr)))
 	req.Header.Add("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -94,27 +95,5 @@ func (server NotifyServiceImpl) NotifyWxPayment(ctx *context.Context, w http.Res
 		grpclog.Errorf("Error read resp body:%v", err)
 		return
 	}
-	grpclog.Infof("save customer received response:%v", string(body))
-
-	// save order
-	jsonStr, _ = json.Marshal(OrderParam{
-		OrderCode: *content.OutTradeNo,
-		UserName:  *content.Payer.Openid,
-	})
-	saveOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/save", server.DataPlatformEndpoint)
-	req, _ = http.NewRequest("POST", saveOrderUrl, strings.NewReader(string(jsonStr)))
-	req.Header.Add("Content-Type", "application/json")
-	resp2, err := http.DefaultClient.Do(req)
-	if err != nil {
-		grpclog.Errorf("Error sending request:%v", err)
-		return
-	}
-	defer resp2.Body.Close()
-
-	body, err = io.ReadAll(resp2.Body)
-	if err != nil {
-		grpclog.Errorf("Error read resp body:%v", err)
-		return
-	}
-	grpclog.Infof("save order received response:%v", string(body))
+	grpclog.Infof("edit order received response:%v", string(body))
 }

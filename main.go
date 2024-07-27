@@ -99,7 +99,7 @@ func run() error {
 		grpclog.Fatal("WxPaymentNotifyServiceInitialize failed error:", err)
 		return err
 	}
-	err = mux.HandlePath("POST", "/wx_payment.NotifyService/jsapi_notify_url", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	err = mux.HandlePath("POST", "/wx_payment_notify/jsapi_notify_url", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		notifyServer.NotifyWxPayment(&ctx, w, r)
 	})
 	if err != nil {

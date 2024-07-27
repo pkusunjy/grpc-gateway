@@ -17,6 +17,7 @@ var (
 		"/utility-project/ysExperienceRecord/getByUserName":    "GET",
 		"/utility-project/ysExperienceRecord/queryById":        "GET",
 		"/utility-project/ysExperienceRecord/save":             "POST",
+		"/utility-project/ysOrder/editOrderStatus":             "POST",
 		"/utility-project/ysOrder/queryById":                   "GET",
 		"/utility-project/ysOrder/queryByUsername":             "GET",
 		"/utility-project/ysOrder/save":                        "POST",
