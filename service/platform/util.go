@@ -26,7 +26,7 @@ var (
 		"/utility-project/ysPaper/queryExamByPaperType":        "GET",
 		"/utility-project/ysExam/queryById":                    "GET",
 		"/utility-project/ysExam/queryExamByPaperId":           "POST",
-		"/utility-project/ysExamAnswer/queryExamAnswerList":    "GET",
+		"/utility-project/ysExamAnswer/queryExamAnswerList":    "POST",
 		"/utility-project/ysExamAnswer/saveExamAnswer":         "POST",
 	}
 )
