@@ -15,6 +15,7 @@ import (
 	auth_service "github.com/pkusunjy/grpc-gateway/service/auth"
 	exercise_pool_service "github.com/pkusunjy/grpc-gateway/service/exercise_pool"
 	"github.com/pkusunjy/grpc-gateway/service/platform"
+	"github.com/pkusunjy/grpc-gateway/service/report"
 	wx_payment_service "github.com/pkusunjy/grpc-gateway/service/wx_payment"
 	auth_pb "github.com/pkusunjy/openai-server-proto/auth"
 	chat_pb "github.com/pkusunjy/openai-server-proto/chat_completion"
@@ -77,6 +78,15 @@ func run() error {
 		return err
 	}
 	err = exercise_pool_pb.RegisterExercisePoolServiceHandlerServer(ctx, mux, exercisePoolServer)
+	if err != nil {
+		return err
+	}
+
+	reportService, err := report.ReportServiceInitialize(&ctx)
+	if err != nil {
+		return err
+	}
+	err = chat_pb.RegisterReportServiceHandlerServer(ctx, mux, reportService)
 	if err != nil {
 		return err
 	}
