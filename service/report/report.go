@@ -86,8 +86,8 @@ func (server ReportService) IeltsTalkReport(ctx context.Context, req *chat_compl
 		qaPairVec = append(qaPairVec, data.AnswerList...)
 	}
 	examAnswerList.AnswerList = append(examAnswerList.AnswerList, qaPairVec...)
-	// 题库里没有答案，mock一下数据
-	examAnswerList.AnswerList[0].Answer = "No, I like to sleep."
+	// // 题库里没有答案，mock一下数据
+	// examAnswerList.AnswerList[0].Answer = "No, I like to sleep."
 	grpclog.Infof("grpc request:%+v", &examAnswerList)
 	// 向grpc服务发起请求
 	talkReport, err := server.IeltsAiChatClient.IeltsTalkReportImpl(ctx, &examAnswerList)
