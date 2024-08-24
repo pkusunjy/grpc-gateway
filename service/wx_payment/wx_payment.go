@@ -19,12 +19,14 @@ import (
 )
 
 type WxPaymentServiceImpl struct {
-	DataPlatformEndpoint string `yaml:"endpoint"`
-	WxAppID              string `yaml:"wx_appid"`
-	WxMchID              string `yaml:"wx_mchid"`
-	WxMchAPIv3Key        string `yaml:"wx_mch_apiv3"`
-	WxSecret             string `yaml:"wx_secret"`
-	WxSerialNo           string `yaml:"wx_serial_no"`
+	DataPlatformEndpoint string   `yaml:"endpoint"`
+	WxAppID              string   `yaml:"wx_appid"`
+	WxMchID              string   `yaml:"wx_mchid"`
+	WxMchAPIv3Key        string   `yaml:"wx_mch_apiv3"`
+	WxSecret             string   `yaml:"wx_secret"`
+	WxSerialNo           string   `yaml:"wx_serial_no"`
+	WhitelistOpenIDs     []string `yaml:"whitelist_openids"`
+	WhitelistOpenIDMap   map[string]struct{}
 	WxClient             *core.Client
 	wx_payment.UnimplementedWxPaymentServiceServer
 }
@@ -67,6 +69,22 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 		grpclog.Fatal(err)
 		return nil, err
 	}
+	// load whitelist
+	content, err = os.ReadFile(*whitelistUserFile)
+	if err != nil {
+		grpclog.Fatal(err)
+		return nil, err
+	}
+	err = yaml.Unmarshal(content, &server)
+	if err != nil {
+		grpclog.Fatal(err)
+		return nil, err
+	}
+	server.WhitelistOpenIDMap = make(map[string]struct{})
+	for _, openid := range server.WhitelistOpenIDs {
+		server.WhitelistOpenIDMap[openid] = struct{}{}
+	}
+	grpclog.Infof("WhitelistOpenIDMap: %+v", server.WhitelistOpenIDMap)
 
 	server.WxClient = wxClient
 	return &server, nil
@@ -163,5 +181,33 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		return nil, err
 	}
 	grpclog.Infof("save order received response:%v", string(saveOrderBody))
+
+	// If openid is in whitelist, he/she doesn't need to pay, so no notify will be called.
+	// But he/she has access to functions that need payment.
+	// This is a new attribute for users, therefore a new column should be added into the MySQL user-related table.
+	// All user-related getter/setter interfaces should be added with extra logic to deal with these "special" users, if needed.
+	// It sucks.
+	if _, exists := server.WhitelistOpenIDMap[openid]; exists {
+		// edit backend order table
+		jsonStr, _ := json.Marshal(OrderParam{
+			OrderCode: *outTradeNo,
+		})
+		editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
+		req, _ := http.NewRequest("POST", editOrderUrl, strings.NewReader(string(jsonStr)))
+		req.Header.Add("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			grpclog.Errorf("Error sending request:%v", err)
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			grpclog.Errorf("Error read resp body:%v", err)
+			return nil, err
+		}
+		grpclog.Infof("edit order received response:%v", string(body))
+	}
 	return &resp, nil
 }

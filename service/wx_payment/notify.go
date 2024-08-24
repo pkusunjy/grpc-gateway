@@ -51,6 +51,7 @@ func NotifyServiceInitialize(ctx *context.Context) (*NotifyServiceImpl, error) {
 		grpclog.Fatal(err)
 		return nil, err
 	}
+
 	certificateVisitor := downloader.MgrInstance().GetCertificateVisitor(server.WxMchID)
 	server.NotifyHandler = notify.NewNotifyHandler(
 		server.WxMchAPIv3Key,
