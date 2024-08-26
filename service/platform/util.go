@@ -1,5 +1,13 @@
 package platform
 
+import (
+	"io"
+	"net/http"
+	"strings"
+
+	"google.golang.org/grpc/grpclog"
+)
+
 const (
 	dataPlatformFile = "./conf/data_platform.yaml"
 )
@@ -30,3 +38,20 @@ var (
 		"/utility-project/ysExamAnswer/saveExamAnswer":         "POST",
 	}
 )
+
+func DoHttpPost(url string, reqBody []byte) ([]byte, error) {
+	req, _ := http.NewRequest("POST", url, strings.NewReader(string(reqBody)))
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		grpclog.Errorf("Error sending request:%v", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		grpclog.Errorf("Error read resp:%v", err)
+		return nil, err
+	}
+	return respBody, nil
+}

@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"strings"
 
+	"github.com/pkusunjy/grpc-gateway/service/platform"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
@@ -78,23 +77,13 @@ func (server NotifyServiceImpl) NotifyWxPayment(ctx *context.Context, w http.Res
 		return
 	}
 	// edit backend order table
-	jsonStr, _ := json.Marshal(OrderParam{
+	editOrderReqBody, _ := json.Marshal(OrderParam{
 		OrderCode: *content.OutTradeNo,
 	})
 	editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
-	req, _ := http.NewRequest("POST", editOrderUrl, strings.NewReader(string(jsonStr)))
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+	editOrderRespBody, err := platform.DoHttpPost(editOrderUrl, editOrderReqBody)
 	if err != nil {
-		grpclog.Errorf("Error sending request:%v", err)
-		return
+		grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", editOrderUrl, string(editOrderReqBody), err)
 	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		grpclog.Errorf("Error read resp body:%v", err)
-		return
-	}
-	grpclog.Infof("edit order received response:%v", string(body))
+	grpclog.Infof("edit order received response:%v", string(editOrderRespBody))
 }
