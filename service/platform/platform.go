@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/grpclog"
 	"gopkg.in/yaml.v3"
 )
@@ -25,6 +27,7 @@ type PlatformService struct {
 	databaseUser     string `yaml:"user"`
 	databasePassword string `yaml:"password"`
 	db               *sql.DB
+	redisClient      *redis.Client
 }
 
 func PlatformServiceInitialize(ctx *context.Context) (*PlatformService, error) {
@@ -60,6 +63,12 @@ func PlatformServiceInitialize(ctx *context.Context) (*PlatformService, error) {
 	server.db.SetConnMaxLifetime(time.Minute * 3)
 	server.db.SetMaxOpenConns(10)
 	server.db.SetMaxIdleConns(10)
+	// init redis client
+	server.redisClient = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
 	return &server, nil
 }
 
@@ -105,4 +114,63 @@ func (server PlatformService) GetExercisePool(ctx *context.Context, w http.Respo
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonResp)
+}
+
+func (server PlatformService) RedisSAdd(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
+
+	type RedisData struct {
+		Key    string   `json:"key,omitempty"`
+		Values []string `json:"values,omitempty"`
+	}
+
+	var data RedisData
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	grpclog.Infof("Received request:%+v", data)
+	key := "mikiai_whitelist_user"
+	if len(data.Key) != 0 {
+		key = data.Key
+	}
+	ret := server.redisClient.SAdd(*ctx, key, data.Values)
+	if ret == nil {
+		grpclog.Errorf("redis sadd failed")
+		http.Error(w, "redis sadd failed", http.StatusBadRequest)
+		return
+	}
+	resp := fmt.Sprintf("{\"res\":%v}", ret.Val())
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(resp))
+}
+
+func (server PlatformService) RedisSMembers(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
+
+	type RedisData struct {
+		Key    string   `json:"key,omitempty"`
+		Values []string `json:"values,omitempty"`
+	}
+
+	var data RedisData
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	grpclog.Infof("Received request:%+v", data)
+	key := "mikiai_whitelist_user"
+	if len(data.Key) != 0 {
+		key = data.Key
+	}
+	whitelist := server.redisClient.SMembers(*ctx, key)
+	if whitelist == nil {
+		grpclog.Errorf("error exec smembers cmd")
+		return
+	}
+	resp := fmt.Sprintf("{\"res\":%v}", strings.Join(whitelist.Val(), ","))
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(resp))
 }

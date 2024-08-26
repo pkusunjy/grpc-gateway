@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/pkusunjy/openai-server-proto/wx_payment"
+	"github.com/redis/go-redis/v9"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
@@ -19,14 +20,13 @@ import (
 )
 
 type WxPaymentServiceImpl struct {
-	DataPlatformEndpoint string   `yaml:"endpoint"`
-	WxAppID              string   `yaml:"wx_appid"`
-	WxMchID              string   `yaml:"wx_mchid"`
-	WxMchAPIv3Key        string   `yaml:"wx_mch_apiv3"`
-	WxSecret             string   `yaml:"wx_secret"`
-	WxSerialNo           string   `yaml:"wx_serial_no"`
-	WhitelistOpenIDs     []string `yaml:"whitelist_openids"`
-	WhitelistOpenIDMap   map[string]struct{}
+	DataPlatformEndpoint string `yaml:"endpoint"`
+	WxAppID              string `yaml:"wx_appid"`
+	WxMchID              string `yaml:"wx_mchid"`
+	WxMchAPIv3Key        string `yaml:"wx_mch_apiv3"`
+	WxSecret             string `yaml:"wx_secret"`
+	WxSerialNo           string `yaml:"wx_serial_no"`
+	RedisClient          *redis.Client
 	WxClient             *core.Client
 	wx_payment.UnimplementedWxPaymentServiceServer
 }
@@ -69,22 +69,12 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 		grpclog.Fatal(err)
 		return nil, err
 	}
-	// load whitelist
-	content, err = os.ReadFile(*whitelistUserFile)
-	if err != nil {
-		grpclog.Fatal(err)
-		return nil, err
-	}
-	err = yaml.Unmarshal(content, &server)
-	if err != nil {
-		grpclog.Fatal(err)
-		return nil, err
-	}
-	server.WhitelistOpenIDMap = make(map[string]struct{})
-	for _, openid := range server.WhitelistOpenIDs {
-		server.WhitelistOpenIDMap[openid] = struct{}{}
-	}
-	grpclog.Infof("WhitelistOpenIDMap: %+v", server.WhitelistOpenIDMap)
+	// init redis client
+	server.RedisClient = redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
 
 	server.WxClient = wxClient
 	return &server, nil
@@ -187,7 +177,13 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	// This is a new attribute for users, therefore a new column should be added into the MySQL user-related table.
 	// All user-related getter/setter interfaces should be added with extra logic to deal with these "special" users, if needed.
 	// It sucks.
-	if _, exists := server.WhitelistOpenIDMap[openid]; exists {
+	isMember := server.RedisClient.SIsMember(ctx, "mikiai_whitelist_user", openid)
+	if isMember == nil {
+		grpclog.Errorf("error exec smembers cmd")
+		return &resp, nil
+	}
+	if isMember.Val() {
+		grpclog.Infof("openid:%v is in whitelist", openid)
 		// edit backend order table
 		jsonStr, _ := json.Marshal(OrderParam{
 			OrderCode: *outTradeNo,

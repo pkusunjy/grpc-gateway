@@ -117,6 +117,25 @@ func run() error {
 		return err
 	}
 
+	// 平台接口
+	platformServer, err := platform.PlatformServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("PlatformServiceInitialize failed error:", err)
+		return err
+	}
+	if err := mux.HandlePath("POST", "/platform/sadd", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		platformServer.RedisSAdd(&ctx, w, r)
+	}); err != nil {
+		grpclog.Fatalf("PlatformService RedisSAdd HandlePath failed error:%+v", err)
+		return err
+	}
+	if err := mux.HandlePath("POST", "/platform/smembers", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		platformServer.RedisSMembers(&ctx, w, r)
+	}); err != nil {
+		grpclog.Fatalf("PlatformService RedisSMembers HandlePath failed error:%+v", err)
+		return err
+	}
+
 	// 转发数据接口
 	forwardServer, err := platform.ForwardServiceInitialize(&ctx)
 	if err != nil {
