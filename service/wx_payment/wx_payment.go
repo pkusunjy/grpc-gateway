@@ -124,25 +124,27 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	// This is a new attribute for users, therefore a new column should be added into the MySQL user-related table.
 	// All user-related getter/setter interfaces should be added with extra logic to deal with these "special" users, if needed.
 	// It sucks.
-	isMember := server.RedisClient.SIsMember(ctx, "mikiai_whitelist_user", openid)
-	if isMember == nil {
-		grpclog.Errorf("error exec smembers cmd")
-		return &resp, nil
-	}
-	if isMember.Val() {
-		grpclog.Infof("openid:%v is in whitelist", openid)
-		// Edit order db
-		editOrderReqBody, _ := json.Marshal(OrderParam{
-			OrderCode: *outTradeNo,
-		})
-		editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
-		editOrderRespBody, err := platform.DoHttpPost(editOrderUrl, editOrderReqBody)
-		if err != nil {
-			grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", editOrderUrl, string(editOrderReqBody), err)
+	if req.DataPlatformOrderType == 3 {
+		isMember := server.RedisClient.SIsMember(ctx, "mikiai_whitelist_user", openid)
+		if isMember == nil {
+			grpclog.Errorf("error exec smembers cmd")
+			return &resp, nil
 		}
-		grpclog.Infof("edit order received response:%v", string(editOrderRespBody))
-		// Whitelist users don't need to create payment, so return an empty JsApiResponse
-		return &resp, nil
+		if isMember.Val() {
+			grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
+			// Edit order db
+			editOrderReqBody, _ := json.Marshal(OrderParam{
+				OrderCode: *outTradeNo,
+			})
+			editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
+			editOrderRespBody, err := platform.DoHttpPost(editOrderUrl, editOrderReqBody)
+			if err != nil {
+				grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", editOrderUrl, string(editOrderReqBody), err)
+			}
+			grpclog.Infof("edit order received response:%v", string(editOrderRespBody))
+			// Whitelist users don't need to create payment, so return an empty JsApiResponse
+			return &resp, nil
+		}
 	}
 
 	// Create prepay_id
