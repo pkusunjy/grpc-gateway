@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"strings"
 
+	"github.com/pkusunjy/grpc-gateway/service/platform"
 	"github.com/pkusunjy/openai-server-proto/chat_completion"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -48,26 +46,17 @@ func ReportServiceInitialize(ctx *context.Context) (*ReportService, error) {
 
 func (server ReportService) IeltsTalkReport(ctx context.Context, req *chat_completion.QueryExamAnswerListRequest) (*chat_completion.TalkReport, error) {
 	// 请求utility-project接口获取题目
-	reqJson, _ := json.Marshal(req)
-	grpclog.Infof("IeltsTalkReport queryExamAnswerListReq:%+v", string(reqJson))
+	queryExamAnswerListReqBody, _ := json.Marshal(req)
+	grpclog.Infof("IeltsTalkReport queryExamAnswerListReq:%+v", string(queryExamAnswerListReqBody))
 	queryExamAnswerListUrl := fmt.Sprintf("http://%s/utility-project/ysExamAnswer/queryExamAnswerList", server.DataPlatformEndpoint)
-	queryExamAnswerListReq, _ := http.NewRequest("POST", queryExamAnswerListUrl, strings.NewReader(string(reqJson)))
-	queryExamAnswerListReq.Header.Add("Content-Type", "application/json")
-	queryExamAnswerListResp, err := http.DefaultClient.Do(queryExamAnswerListReq)
+	queryExamAnswerListRespBody, err := platform.DoHttpPost(queryExamAnswerListUrl, queryExamAnswerListReqBody)
 	if err != nil {
-		grpclog.Errorf("Error sending request:%v", err)
-		return nil, err
+		grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", queryExamAnswerListUrl, string(queryExamAnswerListReqBody), err)
 	}
-	defer queryExamAnswerListResp.Body.Close()
-	queryExamAnswerListBody, err := io.ReadAll(queryExamAnswerListResp.Body)
-	if err != nil {
-		grpclog.Errorf("Error read resp body:%v", err)
-		return nil, err
-	}
-	grpclog.Infof("queryExamAnswerList received response:%v", string(queryExamAnswerListBody))
+	grpclog.Infof("queryExamAnswerList received response:%v", string(queryExamAnswerListRespBody))
 	// 构造题目，请求grpc下游
 	var responseBody chat_completion.QueryExamAnswerListResponse
-	err = json.Unmarshal(queryExamAnswerListBody, &responseBody)
+	err = json.Unmarshal(queryExamAnswerListRespBody, &responseBody)
 	if err != nil {
 		grpclog.Errorf("json unmarshal failed error:%+v", err)
 		return nil, err
