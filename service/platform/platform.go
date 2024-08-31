@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -169,7 +168,39 @@ func (server PlatformService) RedisSMembers(ctx *context.Context, w http.Respons
 		grpclog.Errorf("error exec smembers cmd")
 		return
 	}
-	resp := fmt.Sprintf("{\"res\":%v}", strings.Join(whitelist.Val(), ","))
+
+	whitelistJsonObj, _ := json.Marshal(whitelist.Val())
+	resp := fmt.Sprintf("{\"res\":%v}", string(whitelistJsonObj))
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(resp))
+}
+
+func (server PlatformService) RedisSRem(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
+
+	type RedisData struct {
+		Key    string   `json:"key,omitempty"`
+		Values []string `json:"values,omitempty"`
+	}
+
+	var data RedisData
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	grpclog.Infof("Received request:%+v", data)
+	key := "mikiai_whitelist_user"
+	if len(data.Key) != 0 {
+		key = data.Key
+	}
+	ret := server.redisClient.SRem(*ctx, key, data.Values)
+	if ret == nil {
+		grpclog.Errorf("error exec srem cmd")
+		return
+	}
+
+	resp := fmt.Sprintf("{\"res\":%v}", ret.Val())
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(resp))

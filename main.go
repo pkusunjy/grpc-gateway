@@ -135,6 +135,12 @@ func run() error {
 		grpclog.Fatalf("PlatformService RedisSMembers HandlePath failed error:%+v", err)
 		return err
 	}
+	if err := mux.HandlePath("POST", "/platform/srem", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		platformServer.RedisSRem(&ctx, w, r)
+	}); err != nil {
+		grpclog.Fatalf("PlatformService RedisSRem HandlePath failed error:%+v", err)
+		return err
+	}
 
 	// 转发数据接口
 	forwardServer, err := platform.ForwardServiceInitialize(&ctx)
