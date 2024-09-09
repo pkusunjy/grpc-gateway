@@ -132,16 +132,16 @@ func (server PlatformService) WhitelistMySqlUpdate(ctx *context.Context, data *W
 		execCmd = execCmd + fmt.Sprintf("name = '%s' ", *data.Name)
 	}
 	if data.AddedTime != nil {
-		execCmd = execCmd + fmt.Sprintf("added_time = '%d' ", *data.AddedTime)
+		execCmd = execCmd + fmt.Sprintf(", added_time = '%d' ", *data.AddedTime)
 	}
 	if data.ExpirationTime != nil {
-		execCmd = execCmd + fmt.Sprintf("expiration_date = '%d' ", *data.ExpirationTime)
+		execCmd = execCmd + fmt.Sprintf(", expiration_date = '%d' ", *data.ExpirationTime)
 	}
 	if data.AddedBy != nil {
-		execCmd = execCmd + fmt.Sprintf("added_by = '%s' ", *data.AddedBy)
+		execCmd = execCmd + fmt.Sprintf(", added_by = '%s' ", *data.AddedBy)
 	}
 	if data.Status != nil {
-		execCmd = execCmd + fmt.Sprintf("status = '%d' ", *data.Status)
+		execCmd = execCmd + fmt.Sprintf(", status = '%d' ", *data.Status)
 	}
 	execCmd = execCmd + fmt.Sprintf("WHERE openid = '%s';", *data.OpenID)
 	grpclog.Infof("WhitelistMySqlUpdate cmd:%s", execCmd)
