@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -128,22 +129,25 @@ func (server PlatformService) WhitelistMySqlInsert(ctx *context.Context, data *W
 
 func (server PlatformService) WhitelistMySqlUpdate(ctx *context.Context, data *WhitelistUserData) (int64, error) {
 	execCmd := "UPDATE whitelist_user SET "
+	fields := []string{}
 	if data.Name != nil {
-		execCmd = execCmd + fmt.Sprintf("name = '%s' ", *data.Name)
+		fields = append(fields, fmt.Sprintf("name = '%s'", *data.Name))
 	}
 	if data.AddedTime != nil {
-		execCmd = execCmd + fmt.Sprintf(", added_time = '%d' ", *data.AddedTime)
+		fields = append(fields, fmt.Sprintf("added_time = '%d'", *data.AddedTime))
 	}
 	if data.ExpirationTime != nil {
-		execCmd = execCmd + fmt.Sprintf(", expiration_date = '%d' ", *data.ExpirationTime)
+		fields = append(fields, fmt.Sprintf("expiration_date = '%d'", *data.ExpirationTime))
 	}
 	if data.AddedBy != nil {
-		execCmd = execCmd + fmt.Sprintf(", added_by = '%s' ", *data.AddedBy)
+		fields = append(fields, fmt.Sprintf("added_by = '%s'", *data.AddedBy))
 	}
 	if data.Status != nil {
-		execCmd = execCmd + fmt.Sprintf(", status = '%d' ", *data.Status)
+		fields = append(fields, fmt.Sprintf("status = '%d'", *data.Status))
 	}
-	execCmd = execCmd + fmt.Sprintf("WHERE openid = '%s';", *data.OpenID)
+
+	execCmd += strings.Join(fields, ", ")
+	execCmd += fmt.Sprintf(" WHERE openid = '%s';", *data.OpenID)
 	grpclog.Infof("WhitelistMySqlUpdate cmd:%s", execCmd)
 
 	rs, err := server.db.ExecContext(*ctx, execCmd)
