@@ -21,12 +21,21 @@ const (
 )
 
 type PlatformService struct {
-	databaseIP       string `yaml:"ip"`
-	databasePort     string `yaml:"port"`
-	databaseUser     string `yaml:"user"`
-	databasePassword string `yaml:"password"`
+	DatabaseIP       string `yaml:"ip"`
+	DatabasePort     string `yaml:"port"`
+	DatabaseUser     string `yaml:"user"`
+	DatabasePassword string `yaml:"password"`
 	db               *sql.DB
 	redisClient      *redis.Client
+}
+
+type WhitelistUserData struct {
+	OpenID         *string `json:"openid,omitempty"`
+	Name           *string `json:"name,omitempty"`
+	AddedTime      *uint64 `json:"added_time,omitempty"`
+	ExpirationTime *uint64 `json:"expiration_date,omitempty"`
+	AddedBy        *string `json:"added_by,omitempty"`
+	Status         *int8   `json:"status,omitempty"`
 }
 
 func PlatformServiceInitialize(ctx *context.Context) (*PlatformService, error) {
@@ -44,12 +53,13 @@ func PlatformServiceInitialize(ctx *context.Context) (*PlatformService, error) {
 	}
 	driverName := "mysql"
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
-		server.databaseUser,
-		server.databasePassword,
-		server.databaseIP,
-		server.databasePort,
-		server.databaseUser,
+		server.DatabaseUser,
+		server.DatabasePassword,
+		server.DatabaseIP,
+		server.DatabasePort,
+		server.DatabaseUser,
 	)
+	grpclog.Infof("dataSourceName:%v", dataSourceName)
 	server.db, err = sql.Open(driverName, dataSourceName)
 	if err != nil {
 		grpclog.Fatal(err)
@@ -75,44 +85,122 @@ func (server PlatformService) Destroy() error {
 	return server.db.Close()
 }
 
-func (server PlatformService) GetExercisePool(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
-	grpclog.Infof("GetExercisePool triggered")
-	// defer func() {
-	// 	w.WriteHeader(http.StatusOK)
-	// 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	// 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	// 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	// 	w.Header().Set("Content-Type", "application/json")
-	// }()
-	resp := make(map[string]interface{})
-	resp["status"] = 0
-	resp["msg"] = "success"
-	resp["data"] = map[string]interface{}{
-		"items": []interface{}{
-			map[string]interface{}{
-				"id":  1,
-				"xxx": "3",
-			},
-			map[string]interface{}{
-				"id":  2,
-				"xxx": "4",
-			},
-			map[string]interface{}{
-				"id":  3,
-				"xxx": "5",
-			},
-		},
+func (server PlatformService) WhitelistMySqlInsert(ctx *context.Context, data *WhitelistUserData) (int64, error) {
+	fields := "(openid"
+	values := fmt.Sprintf("('%s'", *data.OpenID)
+	if data.Name != nil {
+		fields = fields + ", name"
+		values = values + fmt.Sprintf(", '%s'", *data.Name)
 	}
-	jsonResp, err := json.Marshal(resp)
+	if data.AddedTime != nil {
+		fields = fields + ", added_time"
+		values = values + fmt.Sprintf(", '%d'", *data.AddedTime)
+	}
+	if data.ExpirationTime != nil {
+		fields = fields + ", expiration_date"
+		values = values + fmt.Sprintf(", '%d'", *data.ExpirationTime)
+	}
+	if data.AddedBy != nil {
+		fields = fields + ", added_by"
+		values = values + fmt.Sprintf(", '%s'", *data.AddedBy)
+	}
+	if data.Status != nil {
+		fields = fields + ", status"
+		values = values + fmt.Sprintf(", '%d'", *data.Status)
+	}
+	fields = fields + ")"
+	values = values + ")"
+	execCmd := fmt.Sprintf("INSERT INTO whitelist_user %s VALUES %s;", fields, values)
+	rs, err := server.db.ExecContext(*ctx, execCmd)
 	if err != nil {
-		grpclog.Fatalf("Error happened in JSON marshal, err: %s", err)
+		grpclog.Errorf("exec insert failed error: %v", err)
+		return 0, err
 	}
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResp)
+	rowsAffected, err := rs.RowsAffected()
+	if err != nil {
+		grpclog.Errorf("get RowsAffected failed error: %v", err)
+		return 0, err
+	}
+	grpclog.Infof("cmd: %v rows affected: %v", execCmd, rowsAffected)
+
+	return rowsAffected, nil
+}
+
+func (server PlatformService) WhitelistMySqlUpdate(ctx *context.Context, data *WhitelistUserData) (int64, error) {
+	execCmd := "UPDATE whitelist_user SET "
+	if data.Name != nil {
+		execCmd = execCmd + fmt.Sprintf("name = '%s' ", *data.Name)
+	}
+	if data.AddedTime != nil {
+		execCmd = execCmd + fmt.Sprintf("added_time = '%d' ", *data.AddedTime)
+	}
+	if data.ExpirationTime != nil {
+		execCmd = execCmd + fmt.Sprintf("expiration_date = '%d' ", *data.ExpirationTime)
+	}
+	if data.AddedBy != nil {
+		execCmd = execCmd + fmt.Sprintf("added_by = '%s' ", *data.AddedBy)
+	}
+	if data.Status != nil {
+		execCmd = execCmd + fmt.Sprintf("status = '%d' ", *data.Status)
+	}
+	execCmd = execCmd + fmt.Sprintf("WHERE openid = '%s';", *data.OpenID)
+	grpclog.Infof("WhitelistMySqlUpdate cmd:%s", execCmd)
+
+	rs, err := server.db.ExecContext(*ctx, execCmd)
+	if err != nil {
+		grpclog.Errorf("exec update failed error: %v", err)
+		return 0, err
+	}
+	rowsAffected, err := rs.RowsAffected()
+	if err != nil {
+		grpclog.Errorf("get RowsAffected failed error: %v", err)
+		return 0, err
+	}
+	grpclog.Infof("cmd: %v rows affected: %v", execCmd, rowsAffected)
+
+	return rowsAffected, nil
+}
+
+func (server PlatformService) WhitelistMySqlQuery(ctx *context.Context, data *WhitelistUserData) ([]WhitelistUserData, error) {
+	var queryCmd string
+	if data.OpenID == nil {
+		queryCmd = "SELECT * FROM whitelist_user;"
+	} else {
+		queryCmd = fmt.Sprintf("SELECT * FROM whitelist_user WHERE openid='%s';", *data.OpenID)
+	}
+	rows, err := server.db.QueryContext(*ctx, queryCmd)
+	if err != nil {
+		grpclog.Errorf("query context failed openid: %v error: %v", data.OpenID, err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var res []WhitelistUserData
+	for rows.Next() {
+		var tmp WhitelistUserData
+		if err := rows.Scan(&tmp.OpenID, &tmp.Name, &tmp.AddedTime, &tmp.ExpirationTime, &tmp.AddedBy, &tmp.Status); err != nil {
+			grpclog.Errorf("rows scan failed error: %v", err)
+			return nil, err
+		}
+		res = append(res, tmp)
+	}
+	return res, nil
+}
+
+func (server PlatformService) WhitelistMySqlDelete(ctx *context.Context, data *WhitelistUserData) (int64, error) {
+	execCmd := fmt.Sprintf("DELETE FROM whitelist_user WHERE openid='%s';", *data.OpenID)
+	rs, err := server.db.ExecContext(*ctx, execCmd)
+	if err != nil {
+		grpclog.Errorf("exec delete failed error: %v", err)
+		return 0, err
+	}
+	rowsAffected, err := rs.RowsAffected()
+	if err != nil {
+		grpclog.Errorf("get RowsAffected failed error: %v", err)
+		return 0, err
+	}
+	grpclog.Infof("cmd: %v rows affected: %v", execCmd, rowsAffected)
+	return rowsAffected, nil
 }
 
 func (server PlatformService) RedisSAdd(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
@@ -134,6 +222,24 @@ func (server PlatformService) RedisSAdd(ctx *context.Context, w http.ResponseWri
 		key = data.Key
 	}
 	ret := server.redisClient.SAdd(*ctx, key, data.Values)
+	if ret == nil {
+		grpclog.Errorf("redis sadd failed")
+		http.Error(w, "redis sadd failed", http.StatusBadRequest)
+		return
+	}
+	resp := fmt.Sprintf("{\"res\":%v}", ret.Val())
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(resp))
+}
+
+func (server PlatformService) RedisSAddGet(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	openid := query.Get("openid")
+
+	grpclog.Infof("Received openid:%+v", openid)
+	key := "mikiai_whitelist_user"
+	ret := server.redisClient.SAdd(*ctx, key, []string{openid})
 	if ret == nil {
 		grpclog.Errorf("redis sadd failed")
 		http.Error(w, "redis sadd failed", http.StatusBadRequest)

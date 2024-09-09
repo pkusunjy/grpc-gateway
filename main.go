@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -123,8 +125,95 @@ func run() error {
 		grpclog.Fatal("PlatformServiceInitialize failed error:", err)
 		return err
 	}
+
+	if err := mux.HandlePath("POST", "/platform/whitelist_insert", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		var data platform.WhitelistUserData
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		grpclog.Infof("Received request:%+v", data)
+		res, err := platformServer.WhitelistMySqlInsert(&ctx, &data)
+		if err != nil {
+			grpclog.Warningf("platform insert failed err:%+v", err)
+		}
+		resp := fmt.Sprintf("{\"res\":%v}", res)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(resp))
+	}); err != nil {
+		grpclog.Fatalf("PlatformService insert HandlePath failed error:%+v", err)
+		return err
+	}
+
+	if err := mux.HandlePath("POST", "/platform/whitelist_update", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		var data platform.WhitelistUserData
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		grpclog.Infof("Received request:%+v", data)
+		res, err := platformServer.WhitelistMySqlUpdate(&ctx, &data)
+		if err != nil {
+			grpclog.Warningf("platform update failed err:%+v", err)
+		}
+		resp := fmt.Sprintf("{\"res\":%v}", res)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(resp))
+	}); err != nil {
+		grpclog.Fatalf("PlatformService update HandlePath failed error:%+v", err)
+		return err
+	}
+
+	if err := mux.HandlePath("POST", "/platform/whitelist_query", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		var data platform.WhitelistUserData
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		grpclog.Infof("Received request:%+v", data)
+		res, err := platformServer.WhitelistMySqlQuery(&ctx, &data)
+		if err != nil {
+			grpclog.Warningf("platform query failed err:%+v", err)
+		}
+		whitelistJsonObj, _ := json.Marshal(res)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(whitelistJsonObj)
+	}); err != nil {
+		grpclog.Fatalf("PlatformService query HandlePath failed error:%+v", err)
+		return err
+	}
+
+	if err := mux.HandlePath("POST", "/platform/whitelist_delete", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		var data platform.WhitelistUserData
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		grpclog.Infof("Received request:%+v", data)
+		res, err := platformServer.WhitelistMySqlDelete(&ctx, &data)
+		if err != nil {
+			grpclog.Warningf("platform delete failed err:%+v", err)
+		}
+		resp := fmt.Sprintf("{\"res\":%v}", res)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(resp))
+	}); err != nil {
+		grpclog.Fatalf("PlatformService delete HandlePath failed error:%+v", err)
+		return err
+	}
+
 	if err := mux.HandlePath("POST", "/platform/sadd", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		platformServer.RedisSAdd(&ctx, w, r)
+	}); err != nil {
+		grpclog.Fatalf("PlatformService RedisSAdd HandlePath failed error:%+v", err)
+		return err
+	}
+	if err := mux.HandlePath("GET", "/platform/sadd", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		platformServer.RedisSAddGet(&ctx, w, r)
 	}); err != nil {
 		grpclog.Fatalf("PlatformService RedisSAdd HandlePath failed error:%+v", err)
 		return err
