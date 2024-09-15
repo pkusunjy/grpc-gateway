@@ -92,16 +92,6 @@ func run() error {
 	if err != nil {
 		return err
 	}
-
-	wxPaymentServer, err := wx_payment_service.WxPaymentServiceInitialize(&ctx)
-	if err != nil {
-		grpclog.Fatal("WxPaymentServiceInitialize failed error:", err)
-		return err
-	}
-	err = wx_payment_pb.RegisterWxPaymentServiceHandlerServer(ctx, mux, wxPaymentServer)
-	if err != nil {
-		return err
-	}
 	// Generated routes end
 
 	// Custom routes begin
@@ -228,6 +218,22 @@ func run() error {
 		platformServer.RedisSRem(&ctx, w, r)
 	}); err != nil {
 		grpclog.Fatalf("PlatformService RedisSRem HandlePath failed error:%+v", err)
+		return err
+	}
+	if err := mux.HandlePath("POST", "/platform/migrate", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		platformServer.Migrate(&ctx, w, r)
+	}); err != nil {
+		grpclog.Fatalf("PlatformService RedisSRem HandlePath failed error:%+v", err)
+		return err
+	}
+	// 微信支付
+	wxPaymentServer, err := wx_payment_service.WxPaymentServiceInitialize(&ctx, platformServer)
+	if err != nil {
+		grpclog.Fatal("WxPaymentServiceInitialize failed error:", err)
+		return err
+	}
+	err = wx_payment_pb.RegisterWxPaymentServiceHandlerServer(ctx, mux, wxPaymentServer)
+	if err != nil {
 		return err
 	}
 

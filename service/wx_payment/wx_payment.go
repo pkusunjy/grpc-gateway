@@ -26,10 +26,11 @@ type WxPaymentServiceImpl struct {
 	WxSerialNo           string `yaml:"wx_serial_no"`
 	RedisClient          *redis.Client
 	WxClient             *core.Client
+	Platform             *platform.PlatformService
 	wx_payment.UnimplementedWxPaymentServiceServer
 }
 
-func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, error) {
+func WxPaymentServiceInitialize(ctx *context.Context, platform *platform.PlatformService) (*WxPaymentServiceImpl, error) {
 	// load keys
 	content, err := os.ReadFile(*authFile)
 	if err != nil {
@@ -75,6 +76,7 @@ func WxPaymentServiceInitialize(ctx *context.Context) (*WxPaymentServiceImpl, er
 	})
 
 	server.WxClient = wxClient
+	server.Platform = platform
 	return &server, nil
 }
 
@@ -130,6 +132,12 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 			grpclog.Errorf("error exec smembers cmd")
 			return &resp, nil
 		}
+		// dbQueryData := platform.WhitelistUserData{OpenID: &openid}
+		// _, err := server.Platform.WhitelistMySqlQuery(&ctx, &dbQueryData)
+		// if err != nil {
+		// 	grpclog.Errorf("whitelist query openid: %v fail err:%v", dbQueryData.OpenID, err)
+		// 	return &resp, nil
+		// }
 		if isMember.Val() {
 			grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
 			// Edit order db
