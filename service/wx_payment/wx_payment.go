@@ -127,18 +127,18 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	// All user-related getter/setter interfaces should be added with extra logic to deal with these "special" users, if needed.
 	// It sucks.
 	if req.DataPlatformOrderType == 3 {
-		isMember := server.RedisClient.SIsMember(ctx, "mikiai_whitelist_user", openid)
-		if isMember == nil {
-			grpclog.Errorf("error exec smembers cmd")
-			return &resp, nil
-		}
-		// dbQueryData := platform.WhitelistUserData{OpenID: &openid}
-		// _, err := server.Platform.WhitelistMySqlQuery(&ctx, &dbQueryData)
-		// if err != nil {
-		// 	grpclog.Errorf("whitelist query openid: %v fail err:%v", dbQueryData.OpenID, err)
+		// isMember := server.RedisClient.SIsMember(ctx, "mikiai_whitelist_user", openid)
+		// if isMember == nil {
+		// 	grpclog.Errorf("error exec smembers cmd")
 		// 	return &resp, nil
 		// }
-		if isMember.Val() {
+		dbQueryData := platform.WhitelistUserData{OpenID: &openid}
+		dbQueryRes, err := server.Platform.WhitelistMySqlQuery(&ctx, &dbQueryData)
+		if err != nil {
+			grpclog.Errorf("whitelist query openid: %v fail err:%v", dbQueryData.OpenID, err)
+			return &resp, nil
+		}
+		if len(dbQueryRes) > 0 {
 			grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
 			// Edit order db
 			editOrderReqBody, _ := json.Marshal(OrderParam{

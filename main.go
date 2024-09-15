@@ -220,12 +220,6 @@ func run() error {
 		grpclog.Fatalf("PlatformService RedisSRem HandlePath failed error:%+v", err)
 		return err
 	}
-	if err := mux.HandlePath("POST", "/platform/migrate", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-		platformServer.Migrate(&ctx, w, r)
-	}); err != nil {
-		grpclog.Fatalf("PlatformService RedisSRem HandlePath failed error:%+v", err)
-		return err
-	}
 	// 微信支付
 	wxPaymentServer, err := wx_payment_service.WxPaymentServiceInitialize(&ctx, platformServer)
 	if err != nil {

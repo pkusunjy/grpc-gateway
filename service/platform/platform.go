@@ -315,22 +315,3 @@ func (server PlatformService) RedisSRem(ctx *context.Context, w http.ResponseWri
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(resp))
 }
-
-func (server PlatformService) Migrate(ctx *context.Context, w http.ResponseWriter, r *http.Request) {
-	grpclog.Infof("Migrate triggered")
-	key := "mikiai_whitelist_user"
-	whitelist := server.redisClient.SMembers(*ctx, key)
-	if whitelist == nil {
-		grpclog.Errorf("error exec smembers cmd")
-		return
-	}
-	openids := whitelist.Val()
-	for _, openid := range openids {
-		input := WhitelistUserData{OpenID: &openid}
-		server.WhitelistMySqlInsert(ctx, &input)
-	}
-	resp := fmt.Sprintf("{\"res\":%v}", 1)
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(resp))
-}
