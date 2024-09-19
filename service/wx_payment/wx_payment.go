@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/pkusunjy/grpc-gateway/service/platform"
 	"github.com/pkusunjy/openai-server-proto/wx_payment"
@@ -138,20 +139,30 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 			grpclog.Errorf("whitelist query openid: %v fail err:%v", dbQueryData.OpenID, err)
 			return &resp, nil
 		}
-		if len(dbQueryRes) > 0 {
-			grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
-			// Edit order db
-			editOrderReqBody, _ := json.Marshal(OrderParam{
-				OrderCode: *outTradeNo,
-			})
-			editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
-			editOrderRespBody, err := platform.DoHttpPost(editOrderUrl, editOrderReqBody)
-			if err != nil {
-				grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", editOrderUrl, string(editOrderReqBody), err)
+		if len(dbQueryRes) > 0 && dbQueryRes[0].Status != nil && *dbQueryRes[0].Status == 1 {
+			now_unix := time.Now().Unix()
+			is_free_user := false
+			if dbQueryRes[0].Status != nil {
+				is_free_user = is_free_user && *dbQueryRes[0].Status == 1
 			}
-			grpclog.Infof("edit order received response:%v", string(editOrderRespBody))
-			// Whitelist users don't need to create payment, so return an empty JsApiResponse
-			return &resp, nil
+			if dbQueryRes[0].AddedTime != nil && dbQueryRes[0].ExpirationTime != nil {
+				is_free_user = is_free_user && (*dbQueryRes[0].AddedTime < uint64(now_unix) && uint64(now_unix) < *dbQueryRes[0].ExpirationTime)
+			}
+			if is_free_user {
+				grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
+				// Edit order db
+				editOrderReqBody, _ := json.Marshal(OrderParam{
+					OrderCode: *outTradeNo,
+				})
+				editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
+				editOrderRespBody, err := platform.DoHttpPost(editOrderUrl, editOrderReqBody)
+				if err != nil {
+					grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", editOrderUrl, string(editOrderReqBody), err)
+				}
+				grpclog.Infof("edit order received response:%v", string(editOrderRespBody))
+				// Whitelist users don't need to create payment, so return an empty JsApiResponse
+				return &resp, nil
+			}
 		}
 	}
 
