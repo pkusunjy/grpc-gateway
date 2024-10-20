@@ -14,7 +14,7 @@ const (
 
 var (
 	ForwardPathMethMap = map[string]string{
-		"/utility-project/ysMemberConfig/queryById":            "GET",
+		"/utility-project/ysBsSetting/queryAppBooleanValue":    "GET",
 		"/utility-project/ysCustomer/abtainDailyFreeUser":      "POST",
 		"/utility-project/ysCustomer/accessToUseOrNo":          "POST",
 		"/utility-project/ysCustomer/queryById":                "GET",
@@ -22,9 +22,14 @@ var (
 		"/utility-project/ysCustomer/queryDailyFreeUse":        "GET",
 		"/utility-project/ysCustomer/queryUseTimeAndValidTime": "GET",
 		"/utility-project/ysCustomer/save":                     "POST",
+		"/utility-project/ysExam/queryById":                    "GET",
+		"/utility-project/ysExam/queryExamByPaperId":           "POST",
+		"/utility-project/ysExamAnswer/queryExamAnswerList":    "POST",
+		"/utility-project/ysExamAnswer/saveExamAnswer":         "POST",
 		"/utility-project/ysExperienceRecord/getByUserName":    "GET",
 		"/utility-project/ysExperienceRecord/queryById":        "GET",
 		"/utility-project/ysExperienceRecord/save":             "POST",
+		"/utility-project/ysMemberConfig/queryById":            "GET",
 		"/utility-project/ysOrder/editOrderStatus":             "POST",
 		"/utility-project/ysOrder/queryById":                   "GET",
 		"/utility-project/ysOrder/queryByUsername":             "GET",
@@ -32,10 +37,6 @@ var (
 		"/utility-project/ysPaper/queryById":                   "GET",
 		"/utility-project/ysPaper/queryPaperList":              "POST",
 		"/utility-project/ysPaper/queryExamByPaperType":        "GET",
-		"/utility-project/ysExam/queryById":                    "GET",
-		"/utility-project/ysExam/queryExamByPaperId":           "POST",
-		"/utility-project/ysExamAnswer/queryExamAnswerList":    "POST",
-		"/utility-project/ysExamAnswer/saveExamAnswer":         "POST",
 	}
 )
 
