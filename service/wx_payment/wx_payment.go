@@ -139,7 +139,9 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 			grpclog.Errorf("whitelist query openid: %v fail err:%v", dbQueryData.OpenID, err)
 			return &resp, nil
 		}
-		grpclog.Infof("WhitelistMySqlQuery resp: %+v", dbQueryRes)
+		for _, item := range dbQueryRes {
+			grpclog.Infof("WhitelistMySqlQuery db res:%v,%v,%v,%v,%v,%v,", *item.OpenID, *item.Name, *item.AddedTime, *item.ExpirationTime, *item.AddedBy, *item.Status)
+		}
 		if len(dbQueryRes) > 0 && dbQueryRes[0].Status != nil && *dbQueryRes[0].Status == 1 {
 			now_unix := time.Now().Unix()
 			is_free_user := false
