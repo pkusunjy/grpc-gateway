@@ -142,14 +142,22 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		for _, item := range dbQueryRes {
 			grpclog.Infof("WhitelistMySqlQuery db res:%v,%v,%v,%v,%v,%v,", *item.OpenID, *item.Name, *item.AddedTime, *item.ExpirationTime, *item.AddedBy, *item.Status)
 		}
-		if len(dbQueryRes) > 0 && dbQueryRes[0].Status != nil && *dbQueryRes[0].Status == 1 {
+		if len(dbQueryRes) > 0 {
 			now_unix := time.Now().Unix()
-			is_free_user := false
+			is_free_user := true
 			if dbQueryRes[0].Status != nil {
-				is_free_user = is_free_user && *dbQueryRes[0].Status == 1
+				is_status_valid := (*dbQueryRes[0].Status == 1)
+				if is_status_valid {
+					grpclog.Infof("openid:%v status check pass", openid)
+				}
+				is_free_user = is_free_user && is_status_valid
 			}
 			if dbQueryRes[0].AddedTime != nil && dbQueryRes[0].ExpirationTime != nil {
-				is_free_user = is_free_user && (*dbQueryRes[0].AddedTime < uint64(now_unix) && uint64(now_unix) < *dbQueryRes[0].ExpirationTime)
+				is_time_valid := (*dbQueryRes[0].AddedTime < uint64(now_unix) && uint64(now_unix) < *dbQueryRes[0].ExpirationTime)
+				if is_time_valid {
+					grpclog.Infof("openid:%v time check pass", openid)
+				}
+				is_free_user = is_free_user && is_time_valid
 			}
 			if is_free_user {
 				grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
