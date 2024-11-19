@@ -168,9 +168,9 @@ func (server PlatformService) WhitelistMySqlUpdate(ctx *context.Context, data *W
 func (server PlatformService) WhitelistMySqlQuery(ctx *context.Context, data *WhitelistUserData) ([]WhitelistUserData, error) {
 	var queryCmd string
 	if data.OpenID == nil {
-		queryCmd = "SELECT * FROM whitelist_user;"
+		queryCmd = "SELECT * FROM whitelist_user WHERE expiration_date > UNIX_TIMESTAMP(NOW());"
 	} else {
-		queryCmd = fmt.Sprintf("SELECT * FROM whitelist_user WHERE openid='%s';", *data.OpenID)
+		queryCmd = fmt.Sprintf("SELECT * FROM whitelist_user WHERE openid='%s' AND expiration_date > UNIX_TIMESTAMP(NOW());", *data.OpenID)
 	}
 	rows, err := server.db.QueryContext(*ctx, queryCmd)
 	if err != nil {
