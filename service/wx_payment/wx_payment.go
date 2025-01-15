@@ -94,17 +94,18 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		MemberType: "0",
 		UserName:   openid,
 	})
+	debug_str := fmt.Sprintf("[frontend_debug] openid:%v ", openid)
 	saveCustomerUrl := fmt.Sprintf("http://%s/utility-project/ysCustomer/save", server.DataPlatformEndpoint)
 	saveCustomerRespBody, err := platform.DoHttpPost(saveCustomerUrl, saveCustomerReqBody)
 	if err != nil {
-		grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", saveCustomerUrl, string(saveCustomerReqBody), err)
+		grpclog.Errorf("%v Error HttpPost, url:%v, reqBody:%v, error:%v", debug_str, saveCustomerUrl, string(saveCustomerReqBody), err)
 	}
-	grpclog.Infof("save customer received response:%v", string(saveCustomerRespBody))
+	grpclog.Infof("%v save customer received response:%v", debug_str, string(saveCustomerRespBody))
 
 	// Generate out_trade_no, for order storange and wechat prepay request
 	outTradeNo, err := GenRandomStr()
 	if err != nil || outTradeNo == nil {
-		grpclog.Errorf("generate out_trade_no failed out_trade_no:%+v, error:%v", outTradeNo, err)
+		grpclog.Errorf("%v generate out_trade_no failed out_trade_no:%+v, error:%v", debug_str, outTradeNo, err)
 		return nil, err
 	}
 
@@ -117,9 +118,9 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	ysOrderSaveUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/save", server.DataPlatformEndpoint)
 	ysOrderSaveRespBody, err := platform.DoHttpPost(ysOrderSaveUrl, ysOrderSaveReqBody)
 	if err != nil {
-		grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", ysOrderSaveUrl, string(ysOrderSaveReqBody), err)
+		grpclog.Errorf("%v Error HttpPost, url:%v, reqBody:%v, error:%v", debug_str, ysOrderSaveUrl, string(ysOrderSaveReqBody), err)
 	}
-	grpclog.Infof("save order received response:%v", string(ysOrderSaveRespBody))
+	grpclog.Infof("%v save order received response:%v", debug_str, string(ysOrderSaveRespBody))
 
 	resp := wx_payment.JsApiResponse{}
 	// If openid is in whitelist, he/she doesn't need to pay, so no notify will be called.
@@ -136,7 +137,7 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		dbQueryData := platform.WhitelistUserData{OpenID: &openid}
 		dbQueryRes, err := server.Platform.WhitelistMySqlQuery(&ctx, &dbQueryData)
 		if err != nil {
-			grpclog.Errorf("whitelist query openid: %v fail err:%v", dbQueryData.OpenID, err)
+			grpclog.Errorf("%v whitelist query openid: %v fail err:%v", debug_str, dbQueryData.OpenID, err)
 			return &resp, nil
 		}
 		if len(dbQueryRes) > 0 {
@@ -145,19 +146,19 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 			if dbQueryRes[0].Status != nil {
 				is_status_valid := (*dbQueryRes[0].Status == 1)
 				if is_status_valid {
-					grpclog.Infof("openid:%v status check pass", openid)
+					grpclog.Infof("%v status check pass", debug_str)
 				}
 				is_free_user = is_free_user && is_status_valid
 			}
 			if dbQueryRes[0].AddedTime != nil && dbQueryRes[0].ExpirationTime != nil {
 				is_time_valid := (*dbQueryRes[0].AddedTime < uint64(now_unix) && uint64(now_unix) < *dbQueryRes[0].ExpirationTime)
 				if is_time_valid {
-					grpclog.Infof("openid:%v time check pass", openid)
+					grpclog.Infof("%v time check pass", debug_str)
 				}
 				is_free_user = is_free_user && is_time_valid
 			}
 			if is_free_user {
-				grpclog.Infof("openid:%v is in whitelist, order_type=3", openid)
+				grpclog.Infof("%v is in whitelist, order_type=3", debug_str)
 				// Edit order db
 				editOrderReqBody, _ := json.Marshal(OrderParam{
 					OrderCode: *outTradeNo,
@@ -165,9 +166,9 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 				editOrderUrl := fmt.Sprintf("http://%s/utility-project/ysOrder/editOrderStatus", server.DataPlatformEndpoint)
 				editOrderRespBody, err := platform.DoHttpPost(editOrderUrl, editOrderReqBody)
 				if err != nil {
-					grpclog.Errorf("Error HttpPost, url:%v, reqBody:%v, error:%v", editOrderUrl, string(editOrderReqBody), err)
+					grpclog.Errorf("%v Error HttpPost, url:%v, reqBody:%v, error:%v", debug_str, editOrderUrl, string(editOrderReqBody), err)
 				}
-				grpclog.Infof("edit order received response:%v", string(editOrderRespBody))
+				grpclog.Infof("%v edit order received response:%v", debug_str, string(editOrderRespBody))
 				// Whitelist users don't need to create payment, so return an empty JsApiResponse
 				return &resp, nil
 			}
@@ -177,7 +178,7 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 	// Create prepay_id
 	amount := req.GetAmount()
 	if len(openid) == 0 || amount == 0 {
-		grpclog.Errorf("request params invalid, received openid:%v amount:%v", openid, amount)
+		grpclog.Errorf("%v request params invalid, received openid:%v amount:%v", debug_str, openid, amount)
 		return nil, fmt.Errorf("openid: %s amount:%d", openid, amount)
 	}
 	svc := jsapi.JsapiApiService{Client: server.WxClient}
@@ -198,10 +199,10 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		},
 	)
 	if err != nil {
-		grpclog.Error("call PrepayWithRequestPayment failed error:", err)
+		grpclog.Error("%v call PrepayWithRequestPayment failed error:", debug_str, err)
 		return nil, err
 	} else {
-		grpclog.Info("call PrepayWithRequestPayment success")
+		grpclog.Info("%v call PrepayWithRequestPayment success", debug_str)
 	}
 	resp = wx_payment.JsApiResponse{
 		Timestamp: *prepayResp.TimeStamp,
@@ -211,7 +212,7 @@ func (server WxPaymentServiceImpl) Jsapi(ctx context.Context, req *wx_payment.Js
 		PaySign:   *prepayResp.PaySign,
 	}
 	respJson, _ := json.Marshal(&resp)
-	grpclog.Infof("PrepayWithRequestPayment return response: %v", string(respJson))
+	grpclog.Infof("%v PrepayWithRequestPayment return response: %v", debug_str, string(respJson))
 
 	return &resp, nil
 }
