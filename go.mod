@@ -3,7 +3,7 @@ module github.com/pkusunjy/grpc-gateway
 go 1.23.0
 
 require (
-	github.com/go-sql-driver/mysql v1.8.1
+	github.com/go-sql-driver/mysql v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/pkusunjy/openai-server-proto v1.1.17
 	github.com/redis/go-redis/v9 v9.6.1
