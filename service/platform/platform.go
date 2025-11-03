@@ -97,9 +97,13 @@ func (server PlatformService) WhitelistMySqlInsert(ctx *context.Context, data *W
 		fields = fields + ", added_time"
 		values = values + fmt.Sprintf(", '%d'", *data.AddedTime)
 	}
-	if data.ExpirationTime != nil {
+	// if data.ExpirationTime != nil {
+	// 	fields = fields + ", expiration_date"
+	// 	values = values + fmt.Sprintf(", '%d'", *data.ExpirationTime)
+	// }
+	{
 		fields = fields + ", expiration_date"
-		values = values + fmt.Sprintf(", '%d'", *data.ExpirationTime)
+		values = values + fmt.Sprintf(", '%d'", *data.AddedTime+86400*365)
 	}
 	if data.AddedBy != nil {
 		fields = fields + ", added_by"
@@ -136,8 +140,11 @@ func (server PlatformService) WhitelistMySqlUpdate(ctx *context.Context, data *W
 	if data.AddedTime != nil {
 		fields = append(fields, fmt.Sprintf("added_time = '%d'", *data.AddedTime))
 	}
-	if data.ExpirationTime != nil {
-		fields = append(fields, fmt.Sprintf("expiration_date = '%d'", *data.ExpirationTime))
+	// if data.ExpirationTime != nil {
+	// 	fields = append(fields, fmt.Sprintf("expiration_date = '%d'", *data.ExpirationTime))
+	// }
+	{
+		fields = append(fields, fmt.Sprintf("expiration_date = '%d'", *data.AddedTime+86400*365))
 	}
 	if data.AddedBy != nil {
 		fields = append(fields, fmt.Sprintf("added_by = '%s'", *data.AddedBy))
