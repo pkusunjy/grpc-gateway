@@ -7,7 +7,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/pkusunjy/openai-server-proto v1.1.17
 	github.com/redis/go-redis/v9 v9.6.1
-	github.com/wechatpay-apiv3/wechatpay-go v0.2.20
+	github.com/wechatpay-apiv3/wechatpay-go v0.2.21
 	google.golang.org/grpc v1.67.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
