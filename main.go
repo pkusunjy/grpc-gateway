@@ -15,11 +15,13 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	auth_service "github.com/pkusunjy/grpc-gateway/service/auth"
+	"github.com/pkusunjy/grpc-gateway/service/doubao"
 	exercise_pool_service "github.com/pkusunjy/grpc-gateway/service/exercise_pool"
 	"github.com/pkusunjy/grpc-gateway/service/platform"
 	"github.com/pkusunjy/grpc-gateway/service/report"
 	wx_payment_service "github.com/pkusunjy/grpc-gateway/service/wx_payment"
 	auth_pb "github.com/pkusunjy/openai-server-proto/auth"
+	"github.com/pkusunjy/openai-server-proto/chat_completion"
 	chat_pb "github.com/pkusunjy/openai-server-proto/chat_completion"
 	exercise_pool_pb "github.com/pkusunjy/openai-server-proto/exercise_pool"
 	wx_payment_pb "github.com/pkusunjy/openai-server-proto/wx_payment"
@@ -228,6 +230,32 @@ func run() error {
 	}
 	err = wx_payment_pb.RegisterWxPaymentServiceHandlerServer(ctx, mux, wxPaymentServer)
 	if err != nil {
+		return err
+	}
+
+	// TTS
+	ttsServer, err := doubao.TTSServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("TTSServiceInitialize failed error:", err)
+		return err
+	}
+	if err := mux.HandlePath("POST", "/chat_completion.ChatService/text_to_speech_doubao", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		var data chat_completion.ChatMessage
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		grpclog.Infof("Received request:%+v", &data)
+		res, err := ttsServer.TTS(ctx, &data)
+		if err != nil {
+			grpclog.Warningf("TTS failed err:%+v", err)
+		}
+		ttsResJsonObj, _ := json.Marshal(res)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(ttsResJsonObj)
+	}); err != nil {
+		grpclog.Fatalf("TTSService text_to_speech_doubao HandlePath failed error:%+v", err)
 		return err
 	}
 
