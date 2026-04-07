@@ -239,7 +239,7 @@ func run() error {
 		grpclog.Fatal("TTSServiceInitialize failed error:", err)
 		return err
 	}
-	if err := mux.HandlePath("POST", "/chat_completion.ChatService/text_to_speech_doubao", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+	if err := mux.HandlePath("POST", "/chat_completion.ChatService/text_to_speech", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
 		var data chat_completion.ChatMessage
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
