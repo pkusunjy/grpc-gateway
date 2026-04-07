@@ -42,9 +42,11 @@ func TTSServiceInitialize(ctx *context.Context) (*TTSService, error) {
 }
 
 func (s *TTSService) TTS(ctx context.Context, req *chat_completion.ChatMessage) (*chat_completion.ChatMessage, error) {
+	uid := req.GetUserid()
 	text := req.GetContent()
 	// 1. call api & save local audio file
-	fileName, err := s.TTSImpl(text)
+	uniqId := fmt.Sprintf("%s_%d", uid, time.Now().UnixMilli())
+	fileName, err := s.TTSImpl(uniqId, text)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +81,7 @@ func (s *TTSService) TTS(ctx context.Context, req *chat_completion.ChatMessage) 
 	return &chat_completion.ChatMessage{Content: getObjResult.URL}, nil
 }
 
-func (s *TTSService) TTSImpl(text string) (string, error) {
+func (s *TTSService) TTSImpl(uniqId string, text string) (string, error) {
 	sessionId := uuid.New().String()
 	header := http.Header{}
 	header.Set("X-Api-App-Key", AppID)
@@ -203,7 +205,7 @@ func (s *TTSService) TTSImpl(text string) (string, error) {
 		if len(audio) == 0 {
 			continue
 		}
-		fileName = "text_to_speech_doubao_" + sessionId + "." + string(*flagEncoding)
+		fileName = "text_to_speech_" + uniqId + "." + string(*flagEncoding)
 		if err := os.WriteFile(fileName, audio, 0644); err != nil {
 			glog.Exit(err)
 		}
