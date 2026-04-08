@@ -259,6 +259,32 @@ func run() error {
 		return err
 	}
 
+	// ASR
+	asrServer, err := doubao.AsrServiceInitialize(&ctx)
+	if err != nil {
+		grpclog.Fatal("AsrServiceInitialize failed error:", err)
+		return err
+	}
+	if err := mux.HandlePath("POST", "/chat_completion.ChatService/transcribe_judge_doubao", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		var data chat_completion.ChatMessage
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		grpclog.Infof("Received request:%+v", &data)
+		res, err := asrServer.Whisper(ctx, &data)
+		if err != nil {
+			grpclog.Warningf("ASR failed err:%+v", err)
+		}
+		asrResJsonObj, _ := json.Marshal(res)
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(asrResJsonObj)
+	}); err != nil {
+		grpclog.Fatalf("AsrService speech_to_text HandlePath failed error:%+v", err)
+		return err
+	}
+
 	// 转发数据接口
 	forwardServer, err := platform.ForwardServiceInitialize(&ctx)
 	if err != nil {

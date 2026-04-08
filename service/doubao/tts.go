@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -83,11 +82,7 @@ func (s *TTSService) TTS(ctx context.Context, req *chat_completion.ChatMessage) 
 
 func (s *TTSService) TTSImpl(uniqId string, text string) (string, error) {
 	sessionId := uuid.New().String()
-	header := http.Header{}
-	header.Set("X-Api-App-Key", AppID)
-	header.Set("X-Api-Access-Key", AccessToken)
-	header.Set("X-Api-Resource-Id", "volc.service_type.10029")
-	header.Set("X-Api-Connect-Id", sessionId)
+	header := NewAuthHeader(sessionId, "volc.service_type.10029")
 
 	conn, r, err := websocket.DefaultDialer.DialContext(context.Background(), *flagEndpoint, header)
 	if err != nil {
