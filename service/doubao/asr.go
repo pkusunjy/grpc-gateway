@@ -2,6 +2,7 @@ package doubao
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"time"
 
@@ -34,15 +35,7 @@ func AsrServiceInitialize(ctx *context.Context) (*AsrService, error) {
 func (s *AsrService) Whisper(ctx context.Context, req *chat_completion.ChatMessage) (*chat_completion.ChatMessage, error) {
 	fileName := req.GetContent()
 	grpclog.Infof("received filename: %v", fileName)
-	// 1. download audio file from oss
-	// _, err := s.ossClient.GetObjectToFile(ctx, &oss.GetObjectRequest{
-	// 	Bucket: oss.Ptr("mikiai"),
-	// 	Key:    oss.Ptr(fileName),
-	// }, localFileName)
-	// if err != nil {
-	// 	grpclog.Warningf("failed to download file from oss: %v", err)
-	// 	return nil, err
-	// }
+	// 1. get presigned url for audio file
 	getObjRequest := &oss.GetObjectRequest{
 		Bucket: oss.Ptr("mikiai"),
 		Key:    oss.Ptr(fileName),
@@ -61,7 +54,8 @@ func (s *AsrService) Whisper(ctx context.Context, req *chat_completion.ChatMessa
 		grpclog.Warningf("failed to excute: %v", err)
 		return nil, err
 	}
-	grpclog.Infof("received filename: %v text: %v", fileName, asrRes.Result.Text)
+	debugInfo, _ := json.Marshal(*asrRes)
+	grpclog.Infof("received filename: %v text: %v raw: %v", fileName, asrRes.Result.Text, string(debugInfo))
 
 	return &chat_completion.ChatMessage{Content: asrRes.Result.Text}, nil
 }
