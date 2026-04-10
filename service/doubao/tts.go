@@ -21,7 +21,7 @@ import (
 var (
 	flagVoiceType = flag.String("voice_type", "zh_female_shuangkuaisisi_moon_bigtts", "voice_type")
 	flagEncoding  = flag.String("encoding", "mp3", "encoding")
-	flagEndpoint  = flag.String("endpoint", "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async", "endpoint")
+	flagEndpoint  = flag.String("endpoint", "wss://openspeech.bytedance.com/api/v3/tts/bidirection", "endpoint")
 )
 
 type TTSService struct {
@@ -82,7 +82,7 @@ func (s *TTSService) TTS(ctx context.Context, req *chat_completion.ChatMessage) 
 
 func (s *TTSService) TTSImpl(uniqId string, text string) (string, error) {
 	sessionId := uuid.New().String()
-	header := NewAuthHeader(sessionId, "volc.seedasr.sauc.duration")
+	header := NewAuthHeader(sessionId, "volc.service_type.10029")
 
 	conn, r, err := websocket.DefaultDialer.DialContext(context.Background(), *flagEndpoint, header)
 	if err != nil {
