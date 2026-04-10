@@ -82,7 +82,7 @@ func (s *TTSService) TTS(ctx context.Context, req *chat_completion.ChatMessage) 
 
 func (s *TTSService) TTSImpl(uniqId string, text string) (string, error) {
 	sessionId := uuid.New().String()
-	header := NewAuthHeader(sessionId, "volc.service_type.10029")
+	header := NewAuthHeader(sessionId, "volc.seedasr.sauc.duration")
 
 	conn, r, err := websocket.DefaultDialer.DialContext(context.Background(), *flagEndpoint, header)
 	if err != nil {
