@@ -21,7 +21,7 @@ import (
 var (
 	flagVoiceType = flag.String("voice_type", "zh_female_shuangkuaisisi_moon_bigtts", "voice_type")
 	flagEncoding  = flag.String("encoding", "mp3", "encoding")
-	flagEndpoint  = flag.String("endpoint", "wss://openspeech.bytedance.com/api/v3/tts/bidirection", "endpoint")
+	flagEndpoint  = flag.String("endpoint", "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async", "endpoint")
 )
 
 type TTSService struct {
