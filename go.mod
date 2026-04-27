@@ -1,6 +1,6 @@
 module github.com/pkusunjy/grpc-gateway
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.4.1
@@ -13,7 +13,7 @@ require (
 	github.com/pkusunjy/openai-server-proto v1.1.18
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/wechatpay-apiv3/wechatpay-go v0.2.20
-	google.golang.org/grpc v1.67.0
+	google.golang.org/grpc v1.80.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -30,11 +30,11 @@ require (
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.4.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260120221211-b8f7ae30c516 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260120221211-b8f7ae30c516 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
