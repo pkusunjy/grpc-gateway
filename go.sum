@@ -4,6 +4,8 @@ github.com/agiledragon/gomonkey v2.0.2+incompatible h1:eXKi9/piiC3cjJD1658mEE2o3
 github.com/agiledragon/gomonkey v2.0.2+incompatible/go.mod h1:2NGfXu1a80LLr2cmWXGBDaHEjb1idR6+FVlX5T3D9hw=
 github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.4.1 h1:wF5rZUhhahzJiRSeLSCQhAkaDBXLa/R893C/ZmEpGcE=
 github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.4.1/go.mod h1:FTzydeQVmR24FI0D6XWUOMKckjXehM/jgMn1xC+DA9M=
+github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.5.0 h1:3qbrAiouDwR8bh6P25vDiyU9qjIDU6TNefDiFFc+Jt0=
+github.com/aliyun/alibabacloud-oss-go-sdk-v2 v1.5.0/go.mod h1:FTzydeQVmR24FI0D6XWUOMKckjXehM/jgMn1xC+DA9M=
 github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
 github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
 github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
